@@ -31,7 +31,7 @@ A web-based application for generating Florida-compliant Last Will and Testament
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/testate.git
+git clone https://github.com/reese-allison/testate.git
 cd testate
 
 # Install dependencies

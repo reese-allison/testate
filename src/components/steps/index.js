@@ -1,0 +1,8 @@
+export { TestatorInfo } from './TestatorInfo'
+export { ExecutorInfo } from './ExecutorInfo'
+export { ChildrenGuardian } from './ChildrenGuardian'
+export { SpecificGifts } from './SpecificGifts'
+export { EstateDistribution } from './EstateDistribution'
+export { AdditionalProvisions } from './AdditionalProvisions'
+export { Disinheritance } from './Disinheritance'
+export { ReviewGenerate } from './ReviewGenerate'

@@ -1,0 +1,246 @@
+/**
+ * Modular validation functions for each form step
+ * Each validator returns an errors object with field names as keys
+ */
+
+// Common validation helpers
+export const isRequired = (value) => {
+  if (typeof value === 'string') return value.trim().length > 0
+  if (Array.isArray(value)) return value.length > 0
+  return value !== null && value !== undefined
+}
+
+export const isValidZip = (zip) => /^\d{5}(-\d{4})?$/.test(zip)
+
+export const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+
+export const isValidPhone = (phone) => /^\d{10}$|^\d{3}-\d{3}-\d{4}$/.test(phone.replace(/\s/g, ''))
+
+/**
+ * Step 0: Testator Information Validation
+ */
+export function validateTestator(testator) {
+  const errors = {}
+
+  if (!isRequired(testator.fullName)) {
+    errors.fullName = 'Full legal name is required'
+  }
+
+  if (!isRequired(testator.address)) {
+    errors.address = 'Address is required'
+  }
+
+  if (!isRequired(testator.city)) {
+    errors.city = 'City is required'
+  }
+
+  if (!isRequired(testator.zip)) {
+    errors.zip = 'ZIP code is required'
+  } else if (!isValidZip(testator.zip)) {
+    errors.zip = 'Please enter a valid ZIP code (e.g., 33101 or 33101-1234)'
+  }
+
+  if (!isRequired(testator.county)) {
+    errors.county = 'County is required'
+  }
+
+  if (testator.maritalStatus === 'married' && !isRequired(testator.spouseName)) {
+    errors.spouseName = "Spouse's name is required when married"
+  }
+
+  return errors
+}
+
+/**
+ * Step 1: Executor Information Validation
+ */
+export function validateExecutor(executor) {
+  const errors = {}
+
+  if (!isRequired(executor.name)) {
+    errors.name = 'Personal Representative name is required'
+  }
+
+  if (!isRequired(executor.relationship)) {
+    errors.relationship = 'Relationship is required'
+  }
+
+  if (!isRequired(executor.address)) {
+    errors.address = 'Address is required'
+  }
+
+  if (!isRequired(executor.city)) {
+    errors.city = 'City is required'
+  }
+
+  if (!isRequired(executor.state)) {
+    errors.state = 'State is required'
+  }
+
+  if (!isRequired(executor.zip)) {
+    errors.zip = 'ZIP code is required'
+  }
+
+  return errors
+}
+
+/**
+ * Step 2: Children & Guardian Validation
+ */
+export function validateChildren(children, guardian) {
+  const errors = {}
+
+  // Validate each child has a name
+  children.forEach((child, i) => {
+    if (!isRequired(child.name)) {
+      errors[`child_${i}_name`] = `Child ${i + 1} name is required`
+    }
+  })
+
+  // If there are minor children, guardian is recommended
+  const hasMinors = children.some(c => c.isMinor)
+  if (hasMinors && !isRequired(guardian?.name)) {
+    errors['guardian.name'] = 'A guardian is recommended for minor children'
+  }
+
+  return errors
+}
+
+/**
+ * Step 3: Specific Gifts Validation
+ */
+export function validateGifts(specificGifts) {
+  const errors = {}
+
+  specificGifts.forEach((gift, i) => {
+    if (!isRequired(gift.description)) {
+      errors[`gift_${i}_description`] = `Gift ${i + 1} description is required`
+    }
+    if (!isRequired(gift.beneficiary)) {
+      errors[`gift_${i}_beneficiary`] = `Gift ${i + 1} beneficiary is required`
+    }
+  })
+
+  return errors
+}
+
+/**
+ * Step 4: Estate Distribution Validation
+ */
+export function validateDistribution(residuaryEstate) {
+  const errors = {}
+
+  if (residuaryEstate.distributionType === 'split') {
+    const total = Number(residuaryEstate.spouseShare) + Number(residuaryEstate.childrenShare)
+    if (total !== 100) {
+      errors.distribution = 'Spouse and children shares must total 100%'
+    }
+  }
+
+  if (residuaryEstate.distributionType === 'custom') {
+    const beneficiaries = residuaryEstate.customBeneficiaries || []
+    const customTotal = beneficiaries.reduce((sum, b) => sum + (Number(b.share) || 0), 0)
+
+    if (beneficiaries.length === 0) {
+      errors.customBeneficiaries = 'Please add at least one beneficiary'
+    } else if (customTotal !== 100) {
+      errors.customBeneficiaries = 'Beneficiary shares must total 100%'
+    }
+
+    beneficiaries.forEach((b, i) => {
+      if (!isRequired(b.name)) {
+        errors[`custom_${i}_name`] = `Beneficiary ${i + 1} name is required`
+      }
+    })
+  }
+
+  return errors
+}
+
+/**
+ * Step 5: Additional Provisions Validation
+ */
+export function validateAdditionalProvisions(formData) {
+  const errors = {}
+  const { digitalAssets, pets, funeral, realProperty, debtsAndTaxes } = formData
+
+  // Digital assets validation (optional but if included, fiduciary recommended)
+  // Currently no required fields
+
+  // Pet validation - caretaker required if pets included
+  if (pets?.include) {
+    pets.items?.forEach((pet, i) => {
+      if (!isRequired(pet.caretaker)) {
+        errors[`pet_${i}_caretaker`] = `Pet ${i + 1} caretaker is required`
+      }
+    })
+  }
+
+  // Real property validation
+  if (realProperty?.include) {
+    realProperty.items?.forEach((property, i) => {
+      if (!isRequired(property.address)) {
+        errors[`property_${i}_address`] = `Property ${i + 1} address is required`
+      }
+      if (!isRequired(property.beneficiary)) {
+        errors[`property_${i}_beneficiary`] = `Property ${i + 1} beneficiary is required`
+      }
+    })
+  }
+
+  return errors
+}
+
+/**
+ * Step 6: Disinheritance Validation
+ */
+export function validateDisinheritance(disinheritance) {
+  const errors = {}
+
+  if (disinheritance?.include) {
+    disinheritance.persons?.forEach((person, i) => {
+      if (!isRequired(person.name)) {
+        errors[`disinherit_${i}_name`] = `Person ${i + 1} name is required`
+      }
+      if (!isRequired(person.relationship)) {
+        errors[`disinherit_${i}_relationship`] = `Person ${i + 1} relationship is required`
+      }
+    })
+  }
+
+  return errors
+}
+
+/**
+ * Step 7: Review - Final validation check
+ */
+export function validateReview(formData) {
+  const errors = {}
+
+  // Final validation - check all required fields
+  if (!isRequired(formData.testator?.fullName)) {
+    errors.testator = 'Testator information is incomplete'
+  }
+
+  if (!isRequired(formData.executor?.name)) {
+    errors.executor = 'Personal Representative information is incomplete'
+  }
+
+  return errors
+}
+
+/**
+ * Map of step index to validator function
+ */
+export const stepValidators = {
+  0: (formData) => validateTestator(formData.testator),
+  1: (formData) => validateExecutor(formData.executor),
+  2: (formData) => validateChildren(formData.children, formData.guardian),
+  3: (formData) => validateGifts(formData.specificGifts),
+  4: (formData) => validateDistribution(formData.residuaryEstate),
+  5: (formData) => validateAdditionalProvisions(formData),
+  6: (formData) => validateDisinheritance(formData.disinheritance),
+  7: (formData) => validateReview(formData)
+}
+
+export default stepValidators

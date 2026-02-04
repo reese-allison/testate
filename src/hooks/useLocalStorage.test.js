@@ -117,4 +117,105 @@ describe('useLocalStorage', () => {
 
     expect(result.current[0]).toBe(6)
   })
+
+  describe('deep merge with initial value', () => {
+    it('adds new fields from initial value when stored data is missing them', () => {
+      // Simulate old stored data missing a new field
+      localStorage.setItem('testKey', JSON.stringify({
+        name: 'John',
+        age: 30
+      }))
+
+      const initialValue = {
+        name: '',
+        age: 0,
+        newField: 'default value'
+      }
+
+      const { result } = renderHook(() =>
+        useLocalStorage('testKey', initialValue)
+      )
+
+      // Should have stored values plus new field with default
+      expect(result.current[0]).toEqual({
+        name: 'John',
+        age: 30,
+        newField: 'default value'
+      })
+    })
+
+    it('deep merges nested objects', () => {
+      localStorage.setItem('testKey', JSON.stringify({
+        user: {
+          name: 'John'
+        }
+      }))
+
+      const initialValue = {
+        user: {
+          name: '',
+          email: 'default@example.com'
+        },
+        settings: {
+          theme: 'light'
+        }
+      }
+
+      const { result } = renderHook(() =>
+        useLocalStorage('testKey', initialValue)
+      )
+
+      expect(result.current[0]).toEqual({
+        user: {
+          name: 'John',
+          email: 'default@example.com'
+        },
+        settings: {
+          theme: 'light'
+        }
+      })
+    })
+
+    it('preserves arrays from stored data', () => {
+      localStorage.setItem('testKey', JSON.stringify({
+        items: [1, 2, 3]
+      }))
+
+      const initialValue = {
+        items: [],
+        newItems: ['a', 'b']
+      }
+
+      const { result } = renderHook(() =>
+        useLocalStorage('testKey', initialValue)
+      )
+
+      expect(result.current[0]).toEqual({
+        items: [1, 2, 3],
+        newItems: ['a', 'b']
+      })
+    })
+
+    it('handles null stored values by using defaults', () => {
+      localStorage.setItem('testKey', JSON.stringify({
+        name: null,
+        value: 'stored'
+      }))
+
+      const initialValue = {
+        name: 'default',
+        value: 'initial',
+        extra: 'new'
+      }
+
+      const { result } = renderHook(() =>
+        useLocalStorage('testKey', initialValue)
+      )
+
+      // null values should be replaced with defaults to prevent crashes
+      expect(result.current[0].name).toBe('default')
+      expect(result.current[0].value).toBe('stored')
+      expect(result.current[0].extra).toBe('new')
+    })
+  })
 })

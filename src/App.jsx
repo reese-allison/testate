@@ -27,10 +27,10 @@ function App() {
             <FileText className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             <div>
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Will Generator
+                Willful Estate
               </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Last Will and Testament
+                Free Will Generator
               </p>
             </div>
           </div>

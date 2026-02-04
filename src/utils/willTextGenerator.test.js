@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { generateWillText } from './willTextGenerator'
 
-const createMinimalFormData = () => ({
+const createMinimalFormData = (residenceState = 'FL') => ({
   testator: {
     fullName: 'John Michael Smith',
     address: '123 Palm Beach Road',
@@ -10,7 +10,8 @@ const createMinimalFormData = () => ({
     zip: '33101',
     county: 'Miami-Dade',
     maritalStatus: 'single',
-    spouseName: ''
+    spouseName: '',
+    residenceState: residenceState
   },
   executor: {
     name: 'Jane Doe',
@@ -38,6 +39,7 @@ const createMinimalFormData = () => ({
   realProperty: { include: false, items: [] },
   debtsAndTaxes: { include: false },
   disinheritance: { include: false, persons: [] },
+  customProvisions: { include: false, items: [] },
   survivorshipPeriod: 30,
   noContestClause: true
 })
@@ -374,6 +376,79 @@ describe('generateWillText', () => {
     })
   })
 
+  describe('Custom Provisions', () => {
+    it('does not include custom provisions when disabled', () => {
+      const formData = createMinimalFormData()
+      formData.customProvisions = { include: false, items: [] }
+      const text = generateWillText(formData)
+
+      expect(text).not.toContain('BUSINESS INSTRUCTIONS')
+    })
+
+    it('does not include custom provisions when enabled but no items', () => {
+      const formData = createMinimalFormData()
+      formData.customProvisions = { include: true, items: [] }
+      const text = generateWillText(formData)
+
+      // Should still have General Provisions as the last numbered article
+      expect(text).toContain('GENERAL PROVISIONS')
+    })
+
+    it('includes custom provisions when enabled with items', () => {
+      const formData = createMinimalFormData()
+      formData.customProvisions = {
+        include: true,
+        items: [{
+          title: 'Business Instructions',
+          content: 'My family business shall be managed by my spouse until my children reach age 25.'
+        }]
+      }
+      const text = generateWillText(formData)
+
+      expect(text).toContain('BUSINESS INSTRUCTIONS')
+      expect(text).toContain('My family business shall be managed by my spouse until my children reach age 25.')
+    })
+
+    it('includes multiple custom provisions as separate articles', () => {
+      const formData = createMinimalFormData()
+      formData.customProvisions = {
+        include: true,
+        items: [
+          {
+            title: 'Family Heirlooms',
+            content: 'The antique clock shall remain in the family.'
+          },
+          {
+            title: 'Charitable Wishes',
+            content: 'I request my family consider annual donations to local charities.'
+          }
+        ]
+      }
+      const text = generateWillText(formData)
+
+      expect(text).toContain('FAMILY HEIRLOOMS')
+      expect(text).toContain('The antique clock shall remain in the family.')
+      expect(text).toContain('CHARITABLE WISHES')
+      expect(text).toContain('I request my family consider annual donations to local charities.')
+    })
+
+    it('custom provisions appear before General Provisions', () => {
+      const formData = createMinimalFormData()
+      formData.customProvisions = {
+        include: true,
+        items: [{
+          title: 'Special Instructions',
+          content: 'These are my special instructions.'
+        }]
+      }
+      const text = generateWillText(formData)
+
+      const customIndex = text.indexOf('SPECIAL INSTRUCTIONS')
+      const generalIndex = text.indexOf('GENERAL PROVISIONS')
+      expect(customIndex).toBeLessThan(generalIndex)
+    })
+  })
+
   describe('No Contest Clause', () => {
     it('includes no contest clause when enabled', () => {
       const formData = createMinimalFormData()
@@ -435,7 +510,7 @@ describe('generateWillText', () => {
 
       expect(text).toContain('LAPSED GIFTS')
       expect(text).toContain('anti-lapse statute')
-      expect(text).toContain('F.S. 732.603')
+      expect(text).toContain('Florida Statutes Section 732.603')
     })
   })
 
@@ -491,6 +566,125 @@ describe('generateWillText', () => {
       expect(text).toContain('ATTESTATION CLAUSE')
       expect(text).toContain('Witness 1 Signature')
       expect(text).toContain('Witness 2 Signature')
+    })
+  })
+
+  describe('Multi-State Support', () => {
+    it('defaults to Florida when residenceState is not set', () => {
+      const formData = createMinimalFormData()
+      delete formData.testator.residenceState
+      const text = generateWillText(formData)
+
+      expect(text).toContain('State of Florida')
+      expect(text).toContain('Florida Statutes Section 732.503')
+    })
+
+    it('uses California law when residenceState is CA', () => {
+      const formData = createMinimalFormData('CA')
+      formData.testator.state = 'California'
+      const text = generateWillText(formData)
+
+      expect(text).toContain('a resident of Miami-Dade County, California')
+      expect(text).toContain('California Probate Code Section 8220')
+      expect(text).toContain('laws of the State of California')
+      expect(text).toContain("California's anti-lapse statute")
+      expect(text).toContain('Notary Public, State of California')
+    })
+
+    it('uses Texas law when residenceState is TX', () => {
+      const formData = createMinimalFormData('TX')
+      formData.testator.state = 'Texas'
+      const text = generateWillText(formData)
+
+      expect(text).toContain('State of Texas')
+      expect(text).toContain('Texas Estates Code Section 251.104')
+      expect(text).toContain("Texas's anti-lapse statute")
+    })
+
+    it('uses Parish instead of County for Louisiana', () => {
+      const formData = createMinimalFormData('LA')
+      formData.testator.state = 'Louisiana'
+      formData.testator.county = 'Orleans'
+      const text = generateWillText(formData)
+
+      expect(text).toContain('a resident of Orleans Parish, Louisiana')
+      expect(text).toContain('PARISH OF ORLEANS')
+    })
+
+    it('includes community property notice for community property states', () => {
+      const formData = createMinimalFormData('CA')
+      formData.testator.state = 'California'
+      const text = generateWillText(formData)
+
+      expect(text).toContain('Community Property')
+      expect(text).toContain('community property state')
+    })
+
+    it('does not include community property notice for common law states', () => {
+      const formData = createMinimalFormData('FL')
+      const text = generateWillText(formData)
+
+      expect(text).not.toContain('community property state')
+    })
+
+    it('includes correct digital assets act for different states', () => {
+      const formData = createMinimalFormData('NY')
+      formData.testator.state = 'New York'
+      formData.digitalAssets = {
+        include: true,
+        fiduciary: 'John Doe',
+        socialMedia: 'delete',
+        email: 'archive',
+        cloudStorage: 'transfer'
+      }
+      const text = generateWillText(formData)
+
+      expect(text).toContain('New York Fiduciary Access to Digital Assets Law')
+    })
+
+    it('generates 3 witness blocks for South Carolina', () => {
+      const formData = createMinimalFormData('SC')
+      formData.testator.state = 'South Carolina'
+      const text = generateWillText(formData)
+
+      expect(text).toContain('Witness 1 Signature')
+      expect(text).toContain('Witness 2 Signature')
+      expect(text).toContain('Witness 3 Signature')
+    })
+
+    it('generates 3 witness blocks for Vermont', () => {
+      const formData = createMinimalFormData('VT')
+      formData.testator.state = 'Vermont'
+      const text = generateWillText(formData)
+
+      expect(text).toContain('Witness 1')
+      expect(text).toContain('Witness 2')
+      expect(text).toContain('Witness 3')
+    })
+
+    it('uses correct Commonwealth designation for Pennsylvania', () => {
+      const formData = createMinimalFormData('PA')
+      formData.testator.state = 'Pennsylvania'
+      const text = generateWillText(formData)
+
+      expect(text).toContain('Commonwealth of Pennsylvania')
+    })
+
+    it('uses correct Commonwealth designation for Kentucky', () => {
+      const formData = createMinimalFormData('KY')
+      formData.testator.state = 'Kentucky'
+      const text = generateWillText(formData)
+
+      expect(text).toContain('Commonwealth of Kentucky')
+    })
+
+    it('handles District of Columbia', () => {
+      const formData = createMinimalFormData('DC')
+      formData.testator.state = 'District of Columbia'
+      const text = generateWillText(formData)
+
+      expect(text).toContain('District of Columbia')
+      expect(text).toContain('D.C. Code Section 18-103')
     })
   })
 })

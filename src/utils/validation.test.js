@@ -10,7 +10,8 @@ const createEmptyFormData = () => ({
     zip: '',
     county: '',
     maritalStatus: 'single',
-    spouseName: ''
+    spouseName: '',
+    residenceState: 'FL'
   },
   executor: {
     name: '',
@@ -432,7 +433,8 @@ describe('validateFullForm', () => {
       zip: '33101',
       county: 'Miami-Dade',
       maritalStatus: 'single',
-      spouseName: ''
+      spouseName: '',
+      residenceState: 'FL'
     }
     formData.executor = {
       name: 'Jane Doe',
@@ -464,7 +466,8 @@ describe('isStepComplete', () => {
       zip: '33101',
       county: 'Miami-Dade',
       maritalStatus: 'single',
-      spouseName: ''
+      spouseName: '',
+      residenceState: 'FL'
     }
     expect(isStepComplete(0, formData)).toBe(true)
   })

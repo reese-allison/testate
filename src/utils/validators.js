@@ -22,6 +22,11 @@ export const isValidPhone = (phone) => /^\d{10}$|^\d{3}-\d{3}-\d{4}$/.test(phone
 export function validateTestator(testator) {
   const errors = {}
 
+  // Residence state is required for will jurisdiction
+  if (!isRequired(testator.residenceState)) {
+    errors.residenceState = 'State of residence is required'
+  }
+
   if (!isRequired(testator.fullName)) {
     errors.fullName = 'Full legal name is required'
   }
@@ -41,7 +46,7 @@ export function validateTestator(testator) {
   }
 
   if (!isRequired(testator.county)) {
-    errors.county = 'County is required'
+    errors.county = testator.residenceState === 'LA' ? 'Parish is required' : 'County is required'
   }
 
   if (testator.maritalStatus === 'married' && !isRequired(testator.spouseName)) {
@@ -162,7 +167,7 @@ export function validateDistribution(residuaryEstate) {
  */
 export function validateAdditionalProvisions(formData) {
   const errors = {}
-  const { digitalAssets, pets, funeral, realProperty, debtsAndTaxes } = formData
+  const { digitalAssets, pets, funeral, realProperty, debtsAndTaxes, customProvisions } = formData
 
   // Digital assets validation (optional but if included, fiduciary recommended)
   // Currently no required fields
@@ -184,6 +189,18 @@ export function validateAdditionalProvisions(formData) {
       }
       if (!isRequired(property.beneficiary)) {
         errors[`property_${i}_beneficiary`] = `Property ${i + 1} beneficiary is required`
+      }
+    })
+  }
+
+  // Custom provisions validation - title and content required if include is true
+  if (customProvisions?.include) {
+    customProvisions.items?.forEach((provision, i) => {
+      if (!isRequired(provision.title)) {
+        errors[`customProvision_${i}_title`] = `Custom provision ${i + 1} title is required`
+      }
+      if (!isRequired(provision.content)) {
+        errors[`customProvision_${i}_content`] = `Custom provision ${i + 1} content is required`
       }
     })
   }

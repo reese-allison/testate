@@ -1,3 +1,5 @@
+import { getStateConfig } from '../constants/stateConfigs'
+
 export function generateWillText(formData) {
   const {
     testator,
@@ -11,10 +13,16 @@ export function generateWillText(formData) {
     funeral,
     realProperty,
     debtsAndTaxes,
+    customProvisions,
     disinheritance,
     survivorshipPeriod = 30,
     noContestClause = true
   } = formData
+
+  // Get state configuration (defaults to FL for backward compatibility)
+  const stateCode = testator.residenceState || 'FL'
+  const stateConfig = getStateConfig(stateCode)
+  const countyOrParish = stateCode === 'LA' ? 'Parish' : 'County'
 
   const lines = []
   let articleNumber = 1
@@ -25,8 +33,8 @@ export function generateWillText(formData) {
   lines.push('')
 
   // Preamble
-  lines.push(`I, ${testator.fullName}, a resident of ${testator.county} County, Florida, ` +
-    `residing at ${testator.address}, ${testator.city}, Florida ${testator.zip}, ` +
+  lines.push(`I, ${testator.fullName}, a resident of ${testator.county} ${countyOrParish}, ${stateConfig.name}, ` +
+    `residing at ${testator.address}, ${testator.city}, ${stateConfig.name} ${testator.zip}, ` +
     `being of sound mind and disposing memory, do hereby declare this to be my Last Will and Testament, ` +
     `and I hereby revoke all wills and codicils previously made by me.`)
   lines.push('')
@@ -187,8 +195,7 @@ export function generateWillText(formData) {
   if (digitalAssets.include) {
     lines.push(`ARTICLE ${toRoman(articleNumber++)} - DIGITAL ASSETS`)
     lines.push('')
-    lines.push(`Pursuant to Florida Statutes Chapter 740 (Florida Fiduciary Access to Digital ` +
-      `Assets Act), I authorize my Personal Representative to access, manage, and dispose of ` +
+    lines.push(`Pursuant to the ${stateConfig.digitalAssetsAct}, I authorize my Personal Representative to access, manage, and dispose of ` +
       `my digital assets.`)
 
     if (digitalAssets.fiduciary) {
@@ -360,7 +367,7 @@ export function generateWillText(formData) {
     `it is difficult or impossible to determine who died first, it shall be conclusively ` +
     `presumed for purposes of this Will that such beneficiary predeceased me. This provision ` +
     `shall apply to all beneficiaries named herein, including my spouse, and shall be in ` +
-    `accordance with the Uniform Simultaneous Death Act as adopted in Florida.`)
+    `accordance with the ${stateConfig.simultaneousDeathAct}.`)
   lines.push('')
 
   // Article - Tax Apportionment
@@ -380,14 +387,24 @@ export function generateWillText(formData) {
     `limited to the predeceasing of the beneficiary, disclaimer, or the non-existence of the ` +
     `property at my death, such gift shall lapse and become part of my residuary estate, ` +
     `unless an alternate beneficiary is specifically designated or unless the beneficiary is ` +
-    `a descendant of mine, in which case Florida's anti-lapse statute (F.S. 732.603) shall apply.`)
+    `a descendant of mine, in which case ${stateConfig.name}'s anti-lapse statute (${stateConfig.antiLapseStatute}) shall apply.`)
   lines.push('')
+
+  // Article - Custom Provisions
+  if (customProvisions?.include && customProvisions.items?.length > 0) {
+    customProvisions.items.forEach((provision) => {
+      lines.push(`ARTICLE ${toRoman(articleNumber++)} - ${provision.title.toUpperCase()}`)
+      lines.push('')
+      lines.push(provision.content)
+      lines.push('')
+    })
+  }
 
   // Article - General Provisions
   lines.push(`ARTICLE ${toRoman(articleNumber++)} - GENERAL PROVISIONS`)
   lines.push('')
   lines.push(`A. Governing Law: This Will shall be governed by and construed in accordance with ` +
-    `the laws of the State of Florida.`)
+    `the laws of the ${stateConfig.fullName}.`)
   lines.push('')
   lines.push(`B. Severability: If any provision of this Will is held invalid or unenforceable, ` +
     `the remaining provisions shall continue in full force and effect.`)
@@ -403,17 +420,29 @@ export function generateWillText(formData) {
     `and more remote descendants, and "per stirpes" means that if any beneficiary predeceases ` +
     `me, that beneficiary's share passes to their descendants by right of representation.`)
   lines.push('')
-  lines.push(`F. Florida Homestead: I am aware that Florida law provides special protections ` +
-    `for homestead property. If I own homestead property at my death, such property shall ` +
-    `pass in accordance with Florida law, which may supersede the provisions of this Will ` +
-    `regarding such property.`)
-  lines.push('')
+
+  // State-specific property notice
+  if (stateConfig.homesteadProvisions) {
+    lines.push(`F. ${stateConfig.name} Homestead: I am aware that ${stateConfig.name} law provides special protections ` +
+      `for homestead property. If I own homestead property at my death, such property shall ` +
+      `pass in accordance with ${stateConfig.name} law, which may supersede the provisions of this Will ` +
+      `regarding such property.`)
+    lines.push('')
+  }
+
+  // Community property notice
+  if (stateConfig.communityProperty) {
+    lines.push(`${stateConfig.homesteadProvisions ? 'G' : 'F'}. Community Property: I am aware that ${stateConfig.name} is a community property state. ` +
+      `Property acquired during marriage may be subject to community property laws, which may ` +
+      `affect the disposition of certain assets under this Will.`)
+    lines.push('')
+  }
 
   // Signature Block
   lines.push('=' .repeat(60))
   lines.push('')
   lines.push(`IN WITNESS WHEREOF, I have signed this Last Will and Testament on this _____ day ` +
-    `of _________________, 20_____, at ${testator.county} County, Florida.`)
+    `of _________________, 20_____, at ${testator.county} ${countyOrParish}, ${stateConfig.name}.`)
   lines.push('')
   lines.push('')
   lines.push('_________________________________________')
@@ -430,31 +459,31 @@ export function generateWillText(formData) {
     `and in the presence of each other.`)
   lines.push('')
   lines.push('')
-  lines.push('_________________________________________    ________________________________')
-  lines.push('Witness 1 Signature                          Printed Name')
-  lines.push('')
-  lines.push('_________________________________________')
-  lines.push('Address')
-  lines.push('')
-  lines.push('')
-  lines.push('_________________________________________    ________________________________')
-  lines.push('Witness 2 Signature                          Printed Name')
-  lines.push('')
-  lines.push('_________________________________________')
-  lines.push('Address')
-  lines.push('')
-  lines.push('')
+
+  // Generate witness signature blocks based on state requirement
+  for (let i = 1; i <= stateConfig.witnesses; i++) {
+    lines.push('_________________________________________    ________________________________')
+    lines.push(`Witness ${i} Signature                          Printed Name`)
+    lines.push('')
+    lines.push('_________________________________________')
+    lines.push('Address')
+    lines.push('')
+    lines.push('')
+  }
 
   // Self-Proving Affidavit
   lines.push('=' .repeat(60))
   lines.push('SELF-PROVING AFFIDAVIT')
-  lines.push('(Pursuant to Florida Statutes Section 732.503)')
+  lines.push(`(Pursuant to ${stateConfig.affidavitStatute})`)
   lines.push('=' .repeat(60))
   lines.push('')
-  lines.push(`STATE OF FLORIDA`)
-  lines.push(`COUNTY OF ${testator.county.toUpperCase()}`)
+  lines.push(`STATE OF ${stateConfig.name.toUpperCase()}`)
+  lines.push(`${countyOrParish.toUpperCase()} OF ${testator.county.toUpperCase()}`)
   lines.push('')
-  lines.push(`We, ${testator.fullName}, _________________________, and _________________________, ` +
+
+  // Generate witness names in affidavit based on state requirement
+  const witnessPlaceholders = Array(stateConfig.witnesses).fill('_________________________').join(', and ')
+  lines.push(`We, ${testator.fullName}, ${witnessPlaceholders}, ` +
     `the Testator and the witnesses, respectively, whose names are signed to the foregoing ` +
     `instrument, being first duly sworn, do hereby declare to the undersigned authority that ` +
     `the Testator signed and executed the instrument as the Testator's Last Will and that the ` +
@@ -469,21 +498,21 @@ export function generateWillText(formData) {
   lines.push(`${testator.fullName}, Testator`)
   lines.push('')
   lines.push('')
-  lines.push('_________________________________________')
-  lines.push('Witness 1')
-  lines.push('')
-  lines.push('')
-  lines.push('_________________________________________')
-  lines.push('Witness 2')
-  lines.push('')
-  lines.push('')
+
+  // Generate witness signature blocks for affidavit
+  for (let i = 1; i <= stateConfig.witnesses; i++) {
+    lines.push('_________________________________________')
+    lines.push(`Witness ${i}`)
+    lines.push('')
+    lines.push('')
+  }
+
   lines.push(`Subscribed, sworn to and acknowledged before me by ${testator.fullName}, the ` +
-    `Testator, and subscribed and sworn to before me by _________________________ and ` +
-    `_________________________, the witnesses, this _____ day of _________________, 20_____.`)
+    `Testator, and subscribed and sworn to before me by ${witnessPlaceholders}, the witnesses, this _____ day of _________________, 20_____.`)
   lines.push('')
   lines.push('')
   lines.push('_________________________________________')
-  lines.push('Notary Public, State of Florida')
+  lines.push(`Notary Public, ${stateConfig.fullName}`)
   lines.push('')
   lines.push('My Commission Expires: ___________________')
   lines.push('')

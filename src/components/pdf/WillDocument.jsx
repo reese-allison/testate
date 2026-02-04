@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Font
 } from '@react-pdf/renderer'
+import { getStateConfig } from '../../constants/stateConfigs'
 
 // Register fonts
 Font.register({
@@ -86,6 +87,9 @@ const styles = StyleSheet.create({
   },
   witnessBlock: {
     width: '45%'
+  },
+  witnessBlockThird: {
+    width: '30%'
   },
   separator: {
     borderTopWidth: 2,
@@ -169,15 +173,24 @@ export function WillDocument({ formData }) {
     funeral,
     realProperty,
     debtsAndTaxes,
+    customProvisions,
     disinheritance,
     survivorshipPeriod = 30,
     noContestClause = true
   } = formData
 
+  // Get state configuration (defaults to FL for backward compatibility)
+  const stateCode = testator.residenceState || 'FL'
+  const stateConfig = getStateConfig(stateCode)
+  const countyOrParish = stateCode === 'LA' ? 'Parish' : 'County'
+
   let articleNumber = 1
   const minorChildren = children.filter(c => c.isMinor)
 
   // Pre-calculate article numbers for each section
+  const customProvisionItems = customProvisions?.include && customProvisions.items?.length > 0
+    ? customProvisions.items : []
+
   const articleNums = {
     family: articleNumber++,
     representative: articleNumber++,
@@ -195,8 +208,13 @@ export function WillDocument({ formData }) {
     simultaneousDeath: articleNumber++,
     taxApportionment: articleNumber++,
     lapsedGifts: articleNumber++,
+    // Custom provisions - each gets its own article number
+    customProvisions: customProvisionItems.map(() => articleNumber++),
     general: articleNumber++
   }
+
+  // Generate witness placeholders for affidavit based on state requirement
+  const witnessPlaceholders = Array(stateConfig.witnesses).fill('_________________________').join(', and ')
 
   return (
     <Document>
@@ -210,8 +228,8 @@ export function WillDocument({ formData }) {
 
         {/* Preamble */}
         <Text style={styles.paragraph}>
-          I, {testator.fullName}, a resident of {testator.county} County, Florida,
-          residing at {testator.address}, {testator.city}, Florida {testator.zip},
+          I, {testator.fullName}, a resident of {testator.county} {countyOrParish}, {stateConfig.name},
+          residing at {testator.address}, {testator.city}, {stateConfig.name} {testator.zip},
           being of sound mind and disposing memory, do hereby declare this to be my
           Last Will and Testament, and I hereby revoke all wills and codicils
           previously made by me.
@@ -235,7 +253,7 @@ export function WillDocument({ formData }) {
               </Text>
               {children.map((child, i) => (
                 <Text key={i} style={styles.listItem}>
-                  • {child.name}
+                  {child.name}
                   {child.relationship === 'adopted' ? ' (legally adopted)' : ''}
                   {child.relationship === 'stepchild' ? ' (stepchild)' : ''}
                 </Text>
@@ -366,7 +384,7 @@ export function WillDocument({ formData }) {
             <View>
               {residuaryEstate.customBeneficiaries.map((b, i) => (
                 <Text key={i} style={styles.listItem}>
-                  • {b.share}% to {b.name}{b.relationship ? ` (${b.relationship})` : null}
+                  {b.share}% to {b.name}{b.relationship ? ` (${b.relationship})` : null}
                 </Text>
               ))}
             </View>
@@ -393,8 +411,7 @@ export function WillDocument({ formData }) {
         {articleNums.digital && (
           <Article title="DIGITAL ASSETS" articleNum={articleNums.digital}>
             <Text style={styles.paragraph}>
-              Pursuant to Florida Statutes Chapter 740 (Florida Fiduciary Access to
-              Digital Assets Act), I authorize my Personal Representative to access,
+              Pursuant to the {stateConfig.digitalAssetsAct}, I authorize my Personal Representative to access,
               manage, and dispose of my digital assets.
             </Text>
             {digitalAssets.fiduciary && (
@@ -405,15 +422,15 @@ export function WillDocument({ formData }) {
             )}
             <Text style={styles.paragraph}>Instructions for digital assets:</Text>
             <Text style={styles.listItem}>
-              • Social media accounts: {digitalAssets.socialMedia === 'delete' ? 'Delete' :
+              Social media accounts: {digitalAssets.socialMedia === 'delete' ? 'Delete' :
                 digitalAssets.socialMedia === 'memorialize' ? 'Memorialize (if available)' : 'Transfer to fiduciary'}
             </Text>
             <Text style={styles.listItem}>
-              • Email accounts: {digitalAssets.email === 'delete' ? 'Delete' :
+              Email accounts: {digitalAssets.email === 'delete' ? 'Delete' :
                 digitalAssets.email === 'archive' ? 'Archive contents then delete' : 'Transfer access'}
             </Text>
             <Text style={styles.listItem}>
-              • Cloud storage: {digitalAssets.cloudStorage === 'delete' ? 'Delete' :
+              Cloud storage: {digitalAssets.cloudStorage === 'delete' ? 'Delete' :
                 digitalAssets.cloudStorage === 'download' ? 'Download and distribute' : 'Transfer to fiduciary'}
             </Text>
             {digitalAssets.cryptocurrency && (
@@ -459,7 +476,7 @@ export function WillDocument({ formData }) {
             </Text>
             {funeral.preference && (
               <Text style={styles.listItem}>
-                • Disposition: {funeral.preference === 'burial' ? 'Traditional burial' :
+                Disposition: {funeral.preference === 'burial' ? 'Traditional burial' :
                   funeral.preference === 'cremation' ? 'Cremation' :
                     funeral.preference === 'green' ? 'Green/natural burial' :
                       funeral.preference === 'donation' ? 'Donation to science' : funeral.preference}
@@ -467,7 +484,7 @@ export function WillDocument({ formData }) {
             )}
             {funeral.serviceType && (
               <Text style={styles.listItem}>
-                • Service: {funeral.serviceType === 'traditional' ? 'Traditional funeral service' :
+                Service: {funeral.serviceType === 'traditional' ? 'Traditional funeral service' :
                   funeral.serviceType === 'memorial' ? 'Memorial service' :
                     funeral.serviceType === 'celebration' ? 'Celebration of life' :
                       funeral.serviceType === 'private' ? 'Private family-only' :
@@ -475,10 +492,10 @@ export function WillDocument({ formData }) {
               </Text>
             )}
             {funeral.location && (
-              <Text style={styles.listItem}>• Location: {funeral.location}</Text>
+              <Text style={styles.listItem}>Location: {funeral.location}</Text>
             )}
             {funeral.memorialDonations && (
-              <Text style={styles.listItem}>• Memorial donations: {funeral.memorialDonations}</Text>
+              <Text style={styles.listItem}>Memorial donations: {funeral.memorialDonations}</Text>
             )}
             <Text style={[styles.paragraph, { marginTop: 8 }]}>
               These wishes are expressions of my desires and are not legally binding. I request
@@ -566,7 +583,7 @@ export function WillDocument({ formData }) {
             where it is difficult or impossible to determine who died first, it shall
             be conclusively presumed that such beneficiary predeceased me. This provision
             applies to all beneficiaries, including my spouse, in accordance with the
-            Uniform Simultaneous Death Act as adopted in Florida.
+            {stateConfig.simultaneousDeathAct}.
           </Text>
         </Article>
 
@@ -586,14 +603,25 @@ export function WillDocument({ formData }) {
             If any specific gift fails for any reason, including the beneficiary's death,
             disclaimer, or non-existence of the property, such gift shall lapse and become
             part of my residuary estate, unless an alternate beneficiary is designated or
-            unless Florida's anti-lapse statute (F.S. 732.603) applies.
+            unless {stateConfig.name}'s anti-lapse statute ({stateConfig.antiLapseStatute}) applies.
           </Text>
         </Article>
+
+        {/* Custom Provisions - Each as its own article */}
+        {customProvisionItems.map((provision, i) => (
+          <ArticleLong
+            key={i}
+            title={provision.title.toUpperCase()}
+            articleNum={articleNums.customProvisions[i]}
+          >
+            <Text style={styles.paragraph}>{provision.content}</Text>
+          </ArticleLong>
+        ))}
 
         {/* Article - General Provisions */}
         <ArticleLong title="GENERAL PROVISIONS" articleNum={articleNums.general}>
           <Text style={styles.paragraph}>
-            A. Governing Law: This Will shall be governed by the laws of the State of Florida.
+            A. Governing Law: This Will shall be governed by the laws of the {stateConfig.fullName}.
           </Text>
           <Text style={styles.paragraph}>
             B. Severability: If any provision is held invalid, the remaining provisions
@@ -608,10 +636,19 @@ export function WillDocument({ formData }) {
             descendants. "Per stirpes" means a predeceased beneficiary's share passes to
             their descendants by right of representation.
           </Text>
-          <Text style={styles.paragraph}>
-            E. Florida Homestead: I am aware Florida law provides special protections for
-            homestead property which may supersede provisions of this Will regarding such property.
-          </Text>
+          {stateConfig.homesteadProvisions && (
+            <Text style={styles.paragraph}>
+              E. {stateConfig.name} Homestead: I am aware {stateConfig.name} law provides special protections for
+              homestead property which may supersede provisions of this Will regarding such property.
+            </Text>
+          )}
+          {stateConfig.communityProperty && (
+            <Text style={styles.paragraph}>
+              {stateConfig.homesteadProvisions ? 'F' : 'E'}. Community Property: I am aware that {stateConfig.name} is a community property state.
+              Property acquired during marriage may be subject to community property laws, which may
+              affect the disposition of certain assets under this Will.
+            </Text>
+          )}
         </ArticleLong>
 
         <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
@@ -626,7 +663,7 @@ export function WillDocument({ formData }) {
 
         <Text style={styles.paragraph}>
           IN WITNESS WHEREOF, I have signed this Last Will and Testament on this
-          _____ day of _________________, 20_____, at {testator.county} County, Florida.
+          _____ day of _________________, 20_____, at {testator.county} {countyOrParish}, {stateConfig.name}.
         </Text>
 
         <View style={styles.signatureSection}>
@@ -644,24 +681,41 @@ export function WillDocument({ formData }) {
           </Text>
         </View>
 
-        <View style={styles.witnessRow}>
-          <View style={styles.witnessBlock}>
-            <View style={styles.signatureLineShort} />
-            <Text style={styles.signatureLabel}>Witness 1 Signature</Text>
-            <View style={[styles.signatureLineShort, { marginTop: 20 }]} />
-            <Text style={styles.signatureLabel}>Printed Name</Text>
-            <View style={[styles.signatureLineShort, { marginTop: 20 }]} />
-            <Text style={styles.signatureLabel}>Address</Text>
+        {/* Witness signature blocks - dynamically based on state requirement */}
+        {stateConfig.witnesses === 2 ? (
+          <View style={styles.witnessRow}>
+            <View style={styles.witnessBlock}>
+              <View style={styles.signatureLineShort} />
+              <Text style={styles.signatureLabel}>Witness 1 Signature</Text>
+              <View style={[styles.signatureLineShort, { marginTop: 20 }]} />
+              <Text style={styles.signatureLabel}>Printed Name</Text>
+              <View style={[styles.signatureLineShort, { marginTop: 20 }]} />
+              <Text style={styles.signatureLabel}>Address</Text>
+            </View>
+            <View style={styles.witnessBlock}>
+              <View style={styles.signatureLineShort} />
+              <Text style={styles.signatureLabel}>Witness 2 Signature</Text>
+              <View style={[styles.signatureLineShort, { marginTop: 20 }]} />
+              <Text style={styles.signatureLabel}>Printed Name</Text>
+              <View style={[styles.signatureLineShort, { marginTop: 20 }]} />
+              <Text style={styles.signatureLabel}>Address</Text>
+            </View>
           </View>
-          <View style={styles.witnessBlock}>
-            <View style={styles.signatureLineShort} />
-            <Text style={styles.signatureLabel}>Witness 2 Signature</Text>
-            <View style={[styles.signatureLineShort, { marginTop: 20 }]} />
-            <Text style={styles.signatureLabel}>Printed Name</Text>
-            <View style={[styles.signatureLineShort, { marginTop: 20 }]} />
-            <Text style={styles.signatureLabel}>Address</Text>
+        ) : (
+          /* For 3 witnesses (SC, VT) */
+          <View style={[styles.witnessRow, { flexWrap: 'wrap' }]}>
+            {[1, 2, 3].map((num) => (
+              <View key={num} style={[styles.witnessBlockThird, { marginBottom: 20 }]}>
+                <View style={[styles.signatureLineShort, { width: 150 }]} />
+                <Text style={styles.signatureLabel}>Witness {num} Signature</Text>
+                <View style={[styles.signatureLineShort, { marginTop: 16, width: 150 }]} />
+                <Text style={styles.signatureLabel}>Printed Name</Text>
+                <View style={[styles.signatureLineShort, { marginTop: 16, width: 150 }]} />
+                <Text style={styles.signatureLabel}>Address</Text>
+              </View>
+            ))}
           </View>
-        </View>
+        )}
 
         <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
           `Page ${pageNumber} of ${totalPages}`
@@ -672,17 +726,17 @@ export function WillDocument({ formData }) {
       <Page size="LETTER" style={styles.page}>
         <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: 4 }]}>SELF-PROVING AFFIDAVIT</Text>
         <Text style={[styles.legalNotice, { marginBottom: 12 }]}>
-          (Pursuant to Florida Statutes Section 732.503)
+          (Pursuant to {stateConfig.affidavitStatute})
         </Text>
         <View style={[styles.separator, { marginBottom: 16, marginTop: 0 }]} />
 
         <View style={{ flexDirection: 'row', marginBottom: 12 }}>
-          <Text style={{ fontWeight: 'bold', marginRight: 40 }}>STATE OF FLORIDA</Text>
-          <Text style={{ fontWeight: 'bold' }}>COUNTY OF {testator.county.toUpperCase()}</Text>
+          <Text style={{ fontWeight: 'bold', marginRight: 40 }}>STATE OF {stateConfig.name.toUpperCase()}</Text>
+          <Text style={{ fontWeight: 'bold' }}>{countyOrParish.toUpperCase()} OF {testator.county.toUpperCase()}</Text>
         </View>
 
         <Text style={[styles.paragraph, { marginBottom: 8 }]}>
-          We, {testator.fullName}, _________________________, and _________________________,
+          We, {testator.fullName}, {witnessPlaceholders},
           the Testator and the witnesses, respectively, whose names are signed to the
           foregoing instrument, being first duly sworn, do hereby declare to the
           undersigned authority that the Testator signed and executed the instrument
@@ -699,22 +753,33 @@ export function WillDocument({ formData }) {
           <Text style={styles.signatureLabel}>{testator.fullName}, Testator</Text>
         </View>
 
-        <View style={[styles.witnessRow, { marginTop: 20 }]}>
-          <View style={styles.witnessBlock}>
-            <View style={[styles.signatureLineShort, { marginTop: 16 }]} />
-            <Text style={styles.signatureLabel}>Witness 1</Text>
+        {/* Affidavit witness blocks - dynamically based on state requirement */}
+        {stateConfig.witnesses === 2 ? (
+          <View style={[styles.witnessRow, { marginTop: 20 }]}>
+            <View style={styles.witnessBlock}>
+              <View style={[styles.signatureLineShort, { marginTop: 16 }]} />
+              <Text style={styles.signatureLabel}>Witness 1</Text>
+            </View>
+            <View style={styles.witnessBlock}>
+              <View style={[styles.signatureLineShort, { marginTop: 16 }]} />
+              <Text style={styles.signatureLabel}>Witness 2</Text>
+            </View>
           </View>
-          <View style={styles.witnessBlock}>
-            <View style={[styles.signatureLineShort, { marginTop: 16 }]} />
-            <Text style={styles.signatureLabel}>Witness 2</Text>
+        ) : (
+          <View style={[styles.witnessRow, { marginTop: 20 }]}>
+            {[1, 2, 3].map((num) => (
+              <View key={num} style={styles.witnessBlockThird}>
+                <View style={[styles.signatureLineShort, { marginTop: 16, width: 140 }]} />
+                <Text style={styles.signatureLabel}>Witness {num}</Text>
+              </View>
+            ))}
           </View>
-        </View>
+        )}
 
         <View style={{ marginTop: 24 }}>
           <Text style={[styles.paragraph, { marginBottom: 6 }]}>
             Subscribed, sworn to and acknowledged before me by {testator.fullName}, the
-            Testator, and subscribed and sworn to before me by _________________________
-            and _________________________, the witnesses, this _____ day of
+            Testator, and subscribed and sworn to before me by {witnessPlaceholders}, the witnesses, this _____ day of
             _________________, 20_____.
           </Text>
         </View>
@@ -722,7 +787,7 @@ export function WillDocument({ formData }) {
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 20 }}>
           <View style={{ width: '55%' }}>
             <View style={[styles.signatureLine, { marginTop: 12, width: 240 }]} />
-            <Text style={styles.signatureLabel}>Notary Public, State of Florida</Text>
+            <Text style={styles.signatureLabel}>Notary Public, {stateConfig.fullName}</Text>
             <Text style={[styles.smallText, { marginTop: 12 }]}>
               My Commission Expires: ___________________
             </Text>

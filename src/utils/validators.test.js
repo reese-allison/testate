@@ -109,12 +109,28 @@ describe('validateTestator', () => {
     zip: '33101',
     county: 'Miami-Dade',
     maritalStatus: 'single',
-    spouseName: ''
+    spouseName: '',
+    residenceState: 'FL'
   }
 
   it('returns no errors for valid testator', () => {
     const errors = validateTestator(validTestator)
     expect(Object.keys(errors)).toHaveLength(0)
+  })
+
+  it('requires residenceState', () => {
+    const errors = validateTestator({ ...validTestator, residenceState: '' })
+    expect(errors.residenceState).toBeDefined()
+  })
+
+  it('accepts valid state codes', () => {
+    const errors = validateTestator({ ...validTestator, residenceState: 'CA' })
+    expect(errors.residenceState).toBeUndefined()
+  })
+
+  it('shows parish error message for Louisiana', () => {
+    const errors = validateTestator({ ...validTestator, residenceState: 'LA', county: '' })
+    expect(errors.county).toBe('Parish is required')
   })
 
   it('requires fullName', () => {
@@ -307,7 +323,8 @@ describe('validateAdditionalProvisions', () => {
       pets: { include: false },
       funeral: { include: false },
       realProperty: { include: false },
-      debtsAndTaxes: { include: false }
+      debtsAndTaxes: { include: false },
+      customProvisions: { include: false }
     })
     expect(Object.keys(errors)).toHaveLength(0)
   })
@@ -318,7 +335,8 @@ describe('validateAdditionalProvisions', () => {
       pets: { include: true, items: [{ name: 'Fluffy', caretaker: '' }] },
       funeral: { include: false },
       realProperty: { include: false },
-      debtsAndTaxes: { include: false }
+      debtsAndTaxes: { include: false },
+      customProvisions: { include: false }
     })
     expect(errors['pet_0_caretaker']).toBeDefined()
   })
@@ -329,10 +347,72 @@ describe('validateAdditionalProvisions', () => {
       pets: { include: false },
       funeral: { include: false },
       realProperty: { include: true, items: [{ address: '', beneficiary: '' }] },
-      debtsAndTaxes: { include: false }
+      debtsAndTaxes: { include: false },
+      customProvisions: { include: false }
     })
     expect(errors['property_0_address']).toBeDefined()
     expect(errors['property_0_beneficiary']).toBeDefined()
+  })
+
+  it('requires custom provision title and content when enabled', () => {
+    const errors = validateAdditionalProvisions({
+      digitalAssets: { include: false },
+      pets: { include: false },
+      funeral: { include: false },
+      realProperty: { include: false },
+      debtsAndTaxes: { include: false },
+      customProvisions: { include: true, items: [{ title: '', content: '' }] }
+    })
+    expect(errors['customProvision_0_title']).toBeDefined()
+    expect(errors['customProvision_0_content']).toBeDefined()
+  })
+
+  it('returns no errors for valid custom provisions', () => {
+    const errors = validateAdditionalProvisions({
+      digitalAssets: { include: false },
+      pets: { include: false },
+      funeral: { include: false },
+      realProperty: { include: false },
+      debtsAndTaxes: { include: false },
+      customProvisions: {
+        include: true,
+        items: [{ title: 'Business Instructions', content: 'My business shall be handled...' }]
+      }
+    })
+    expect(Object.keys(errors)).toHaveLength(0)
+  })
+
+  it('validates multiple custom provisions', () => {
+    const errors = validateAdditionalProvisions({
+      digitalAssets: { include: false },
+      pets: { include: false },
+      funeral: { include: false },
+      realProperty: { include: false },
+      debtsAndTaxes: { include: false },
+      customProvisions: {
+        include: true,
+        items: [
+          { title: '', content: 'Some content' },
+          { title: 'Valid Title', content: '' }
+        ]
+      }
+    })
+    expect(errors['customProvision_0_title']).toBeDefined()
+    expect(errors['customProvision_0_content']).toBeUndefined()
+    expect(errors['customProvision_1_title']).toBeUndefined()
+    expect(errors['customProvision_1_content']).toBeDefined()
+  })
+
+  it('returns no errors when custom provisions disabled even with invalid items', () => {
+    const errors = validateAdditionalProvisions({
+      digitalAssets: { include: false },
+      pets: { include: false },
+      funeral: { include: false },
+      realProperty: { include: false },
+      debtsAndTaxes: { include: false },
+      customProvisions: { include: false, items: [{ title: '', content: '' }] }
+    })
+    expect(Object.keys(errors)).toHaveLength(0)
   })
 })
 

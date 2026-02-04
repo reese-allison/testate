@@ -8,6 +8,7 @@ import {
   SpecificGifts,
   EstateDistribution,
   AdditionalProvisions,
+  CustomProvisions,
   Disinheritance,
   ReviewGenerate
 } from './steps'
@@ -63,8 +64,8 @@ export function WillGenerator() {
       Object.keys(newErrors).forEach(key => {
         if (key.startsWith('child_') || key.startsWith('gift_') ||
             key.startsWith('pet_') || key.startsWith('disinherit_') ||
-            key.startsWith('custom_') || key === 'customBeneficiaries' ||
-            key === 'distribution') {
+            key.startsWith('custom_') || key.startsWith('customProvision_') ||
+            key === 'customBeneficiaries' || key === 'distribution') {
           delete newErrors[key]
         }
       })
@@ -94,11 +95,38 @@ export function WillGenerator() {
   }
 
   const handleStepClick = (stepIndex) => {
+    // Don't do anything if clicking the current step
+    if (stepIndex === currentStep) {
+      return
+    }
+
+    // Going backwards - always allowed, clear errors
     if (stepIndex < currentStep) {
       setErrors({})
       setCurrentStep(stepIndex)
       window.scrollTo(0, 0)
+      return
     }
+
+    // Going forwards - validate current step but allow navigation anyway
+    const stepErrors = validateStep(currentStep, formData)
+    if (Object.keys(stepErrors).length > 0) {
+      // Show errors but still allow navigation (user's choice)
+      setErrors(stepErrors)
+      // Use confirm dialog to let user decide
+      const proceed = confirm(
+        'There are validation errors on the current step. Do you want to continue anyway?\n\n' +
+        'Note: You will need to fix these errors before generating your will.'
+      )
+      if (!proceed) {
+        return
+      }
+    }
+
+    // Navigate to the target step
+    setErrors({})
+    setCurrentStep(stepIndex)
+    window.scrollTo(0, 0)
   }
 
   const handleReset = () => {
@@ -162,17 +190,26 @@ export function WillGenerator() {
         )
       case 5:
         return (
-          <AdditionalProvisions
-            data={{
-              digitalAssets: formData.digitalAssets,
-              pets: formData.pets,
-              funeral: formData.funeral,
-              realProperty: formData.realProperty,
-              debtsAndTaxes: formData.debtsAndTaxes
-            }}
-            onChange={handleFieldChange}
-            errors={errors}
-          />
+          <>
+            <AdditionalProvisions
+              data={{
+                digitalAssets: formData.digitalAssets,
+                pets: formData.pets,
+                funeral: formData.funeral,
+                realProperty: formData.realProperty,
+                debtsAndTaxes: formData.debtsAndTaxes
+              }}
+              onChange={handleFieldChange}
+              errors={errors}
+            />
+            <div className="mt-6">
+              <CustomProvisions
+                data={formData.customProvisions}
+                onChange={handleFieldChange}
+                errors={errors}
+              />
+            </div>
+          </>
         )
       case 6:
         return (

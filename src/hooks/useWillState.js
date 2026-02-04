@@ -10,7 +10,8 @@ const initialState = {
     zip: '',
     county: '',
     maritalStatus: 'single',
-    spouseName: ''
+    spouseName: '',
+    residenceState: 'FL' // State code for will jurisdiction (default FL for backward compatibility)
   },
 
   // Step 2: Executor/Personal Representative
@@ -92,6 +93,10 @@ const initialState = {
     include: false,
     paymentOrder: 'residuary', // residuary, proportional, specific
     specificInstructions: ''
+  },
+  customProvisions: {
+    include: false,
+    items: []  // { title: '', content: '' }
   },
 
   // Step 7: Disinheritance (Optional)

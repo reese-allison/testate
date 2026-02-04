@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Moon, Sun, FileText } from 'lucide-react'
 import WillGenerator from './components/WillGenerator'
 import ErrorBoundary from './components/ErrorBoundary'
+import KofiWidget from './components/KofiWidget'
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => {
@@ -26,7 +27,7 @@ function App() {
             <FileText className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             <div>
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Florida Will Generator
+                Will Generator
               </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Last Will and Testament
@@ -59,8 +60,20 @@ function App() {
 
       <footer className="border-t border-gray-200 dark:border-gray-700 mt-12 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
         <p>This tool generates a template for informational purposes only.</p>
-        <p className="mt-1">Consult a licensed Florida attorney for legal advice.</p>
+        <p className="mt-1">Consult a licensed attorney in your state for legal advice.</p>
+        <p className="mt-3">
+          <a
+            href="https://ko-fi.com/reeseallison"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 dark:text-blue-400 hover:underline"
+          >
+            Support this project
+          </a>
+        </p>
       </footer>
+
+      <KofiWidget />
     </div>
   )
 }

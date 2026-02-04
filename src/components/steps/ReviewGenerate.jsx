@@ -7,12 +7,15 @@ import { generatePDF } from '../../utils/pdfGenerator'
 export function ReviewGenerate({ formData, onReset }) {
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState(null)
+  const [showThankYou, setShowThankYou] = useState(false)
 
   const handleGeneratePDF = async () => {
     setIsGenerating(true)
     setError(null)
+    setShowThankYou(false)
     try {
       await generatePDF(formData)
+      setShowThankYou(true)
     } catch (err) {
       console.error('PDF generation error:', err)
       setError('Failed to generate PDF. Please try again.')
@@ -191,6 +194,24 @@ export function ReviewGenerate({ formData, onReset }) {
       {error && (
         <Alert variant="error" title="Error">
           {error}
+        </Alert>
+      )}
+
+      {showThankYou && (
+        <Alert variant="success" title="Download Complete">
+          <p>Your will document has been downloaded successfully.</p>
+          <p className="mt-2 text-sm">
+            If this tool was helpful, consider{' '}
+            <a
+              href="https://ko-fi.com/reeseallison"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+            >
+              supporting the project
+            </a>
+            {' '}to help keep it free and maintained.
+          </p>
         </Alert>
       )}
 

@@ -1,0 +1,653 @@
+/**
+ * State-specific configurations for will generation
+ *
+ * Each state has different requirements for:
+ * - Number of witnesses required (typically 2)
+ * - Self-proving affidavit availability and statute
+ * - Anti-lapse statute references
+ * - Community property vs common law property
+ * - Homestead provisions
+ * - Digital assets act (most states adopted RUFADAA)
+ * - Simultaneous death act
+ *
+ * Community property states: AZ, CA, ID, LA, NV, NM, TX, WA, WI
+ */
+
+export const STATE_CONFIGS = {
+  AL: {
+    name: 'Alabama',
+    fullName: 'State of Alabama',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Alabama Code Section 43-8-132',
+    antiLapseStatute: 'Alabama Code Section 43-8-224',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Alabama Uniform Fiduciary Access to Digital Assets Act (Ala. Code Section 19-3D-1 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (Ala. Code Section 43-7-1 et seq.)'
+  },
+  AK: {
+    name: 'Alaska',
+    fullName: 'State of Alaska',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Alaska Statutes Section 13.12.504',
+    antiLapseStatute: 'Alaska Statutes Section 13.12.603',
+    communityProperty: false, // Optional community property
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (AS 13.52)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (AS 13.12.702)'
+  },
+  AZ: {
+    name: 'Arizona',
+    fullName: 'State of Arizona',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Arizona Revised Statutes Section 14-2504',
+    antiLapseStatute: 'Arizona Revised Statutes Section 14-2603',
+    communityProperty: true,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Arizona Revised Uniform Fiduciary Access to Digital Assets Act (A.R.S. Section 14-13001 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (A.R.S. Section 14-2702)'
+  },
+  AR: {
+    name: 'Arkansas',
+    fullName: 'State of Arkansas',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Arkansas Code Section 28-25-106',
+    antiLapseStatute: 'Arkansas Code Section 28-26-104',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Arkansas Fiduciary Access to Digital Assets Act (Ark. Code Section 28-77-101 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (Ark. Code Section 28-10-101 et seq.)'
+  },
+  CA: {
+    name: 'California',
+    fullName: 'State of California',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'California Probate Code Section 8220',
+    antiLapseStatute: 'California Probate Code Section 21110',
+    communityProperty: true,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (Cal. Prob. Code Section 870-884)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (Cal. Prob. Code Section 220-224)'
+  },
+  CO: {
+    name: 'Colorado',
+    fullName: 'State of Colorado',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Colorado Revised Statutes Section 15-11-504',
+    antiLapseStatute: 'Colorado Revised Statutes Section 15-11-603',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (C.R.S. Section 15-1-1501 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (C.R.S. Section 15-11-702)'
+  },
+  CT: {
+    name: 'Connecticut',
+    fullName: 'State of Connecticut',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Connecticut General Statutes Section 45a-285',
+    antiLapseStatute: 'Connecticut General Statutes Section 45a-441',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (C.G.S. Section 45a-334a et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (C.G.S. Section 45a-441)'
+  },
+  DE: {
+    name: 'Delaware',
+    fullName: 'State of Delaware',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Delaware Code Title 12 Section 1305',
+    antiLapseStatute: 'Delaware Code Title 12 Section 2313',
+    communityProperty: false,
+    homesteadProvisions: false,
+    digitalAssetsAct: 'Delaware Uniform Fiduciary Access to Digital Assets Act (12 Del. C. Section 5001 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (12 Del. C. Section 701 et seq.)'
+  },
+  FL: {
+    name: 'Florida',
+    fullName: 'State of Florida',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Florida Statutes Section 732.503',
+    antiLapseStatute: 'Florida Statutes Section 732.603',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Florida Fiduciary Access to Digital Assets Act (F.S. Chapter 740)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act as adopted in Florida (F.S. Section 732.601)'
+  },
+  GA: {
+    name: 'Georgia',
+    fullName: 'State of Georgia',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Georgia Code Section 53-4-24',
+    antiLapseStatute: 'Georgia Code Section 53-4-64',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (O.C.G.A. Section 53-13-1 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (O.C.G.A. Section 53-10-1 et seq.)'
+  },
+  HI: {
+    name: 'Hawaii',
+    fullName: 'State of Hawaii',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Hawaii Revised Statutes Section 560:2-504',
+    antiLapseStatute: 'Hawaii Revised Statutes Section 560:2-603',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (HRS Chapter 556A)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (HRS Section 560:2-702)'
+  },
+  ID: {
+    name: 'Idaho',
+    fullName: 'State of Idaho',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Idaho Code Section 15-2-504',
+    antiLapseStatute: 'Idaho Code Section 15-2-603',
+    communityProperty: true,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (Idaho Code Section 15-14-101 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (Idaho Code Section 15-2-702)'
+  },
+  IL: {
+    name: 'Illinois',
+    fullName: 'State of Illinois',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Illinois Compiled Statutes 755 ILCS 5/6-4',
+    antiLapseStatute: 'Illinois Compiled Statutes 755 ILCS 5/4-11',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (760 ILCS 75/)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (755 ILCS 5/3-1)'
+  },
+  IN: {
+    name: 'Indiana',
+    fullName: 'State of Indiana',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Indiana Code Section 29-1-5-3.1',
+    antiLapseStatute: 'Indiana Code Section 29-1-6-1',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (IC 32-39-1 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (IC 29-1-17)'
+  },
+  IA: {
+    name: 'Iowa',
+    fullName: 'State of Iowa',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Iowa Code Section 633.279',
+    antiLapseStatute: 'Iowa Code Section 633.273',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (Iowa Code Chapter 636C)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (Iowa Code Section 633.523 et seq.)'
+  },
+  KS: {
+    name: 'Kansas',
+    fullName: 'State of Kansas',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Kansas Statutes Section 59-606',
+    antiLapseStatute: 'Kansas Statutes Section 59-615',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (K.S.A. 58-4801 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (K.S.A. 58-708 et seq.)'
+  },
+  KY: {
+    name: 'Kentucky',
+    fullName: 'Commonwealth of Kentucky',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Kentucky Revised Statutes Section 394.225',
+    antiLapseStatute: 'Kentucky Revised Statutes Section 394.400',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (KRS Chapter 395A)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (KRS 397.010 et seq.)'
+  },
+  LA: {
+    name: 'Louisiana',
+    fullName: 'State of Louisiana',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Louisiana Civil Code Article 1577',
+    antiLapseStatute: 'Louisiana Civil Code Article 1593',
+    communityProperty: true,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Uniform Fiduciary Access to Digital Assets Act (La. R.S. 9:2481 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (La. R.S. 9:1521 et seq.)'
+  },
+  ME: {
+    name: 'Maine',
+    fullName: 'State of Maine',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Maine Revised Statutes Title 18-C Section 2-504',
+    antiLapseStatute: 'Maine Revised Statutes Title 18-C Section 2-603',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (18-C M.R.S. Section 8-101 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (18-C M.R.S. Section 2-702)'
+  },
+  MD: {
+    name: 'Maryland',
+    fullName: 'State of Maryland',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Maryland Estates and Trusts Code Section 5-304',
+    antiLapseStatute: 'Maryland Estates and Trusts Code Section 4-403',
+    communityProperty: false,
+    homesteadProvisions: false,
+    digitalAssetsAct: 'Maryland Fiduciary Access to Digital Assets Act (Md. Est. & Trusts Section 15-601 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (Md. Est. & Trusts Section 3-108)'
+  },
+  MA: {
+    name: 'Massachusetts',
+    fullName: 'Commonwealth of Massachusetts',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Massachusetts General Laws Chapter 190B Section 2-504',
+    antiLapseStatute: 'Massachusetts General Laws Chapter 190B Section 2-603',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Uniform Fiduciary Access to Digital Assets Act (M.G.L. c. 190B Section 6-501 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (M.G.L. c. 190B Section 2-702)'
+  },
+  MI: {
+    name: 'Michigan',
+    fullName: 'State of Michigan',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Michigan Compiled Laws Section 700.2504',
+    antiLapseStatute: 'Michigan Compiled Laws Section 700.2603',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Fiduciary Access to Digital Assets Act (MCL 700.1051 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (MCL 700.2702)'
+  },
+  MN: {
+    name: 'Minnesota',
+    fullName: 'State of Minnesota',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Minnesota Statutes Section 524.2-504',
+    antiLapseStatute: 'Minnesota Statutes Section 524.2-603',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (Minn. Stat. Chapter 521A)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (Minn. Stat. Section 524.2-702)'
+  },
+  MS: {
+    name: 'Mississippi',
+    fullName: 'State of Mississippi',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Mississippi Code Section 91-7-7',
+    antiLapseStatute: 'Mississippi Code Section 91-5-7',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Mississippi Uniform Fiduciary Access to Digital Assets Act (Miss. Code Section 91-29-1 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (Miss. Code Section 91-3-7)'
+  },
+  MO: {
+    name: 'Missouri',
+    fullName: 'State of Missouri',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Missouri Revised Statutes Section 474.337',
+    antiLapseStatute: 'Missouri Revised Statutes Section 474.460',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Missouri Uniform Fiduciary Access to Digital Assets Act (Mo. Rev. Stat. Section 461.800 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (Mo. Rev. Stat. Section 471.010 et seq.)'
+  },
+  MT: {
+    name: 'Montana',
+    fullName: 'State of Montana',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Montana Code Section 72-2-524',
+    antiLapseStatute: 'Montana Code Section 72-2-613',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (MCA Title 72 Chapter 34)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (MCA Section 72-2-712)'
+  },
+  NE: {
+    name: 'Nebraska',
+    fullName: 'State of Nebraska',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Nebraska Revised Statutes Section 30-2504',
+    antiLapseStatute: 'Nebraska Revised Statutes Section 30-2343',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Nebraska Uniform Fiduciary Access to Digital Assets Act (Neb. Rev. Stat. Section 30-4001 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (Neb. Rev. Stat. Section 30-2702)'
+  },
+  NV: {
+    name: 'Nevada',
+    fullName: 'State of Nevada',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Nevada Revised Statutes Section 133.050',
+    antiLapseStatute: 'Nevada Revised Statutes Section 132.370',
+    communityProperty: true,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (NRS Chapter 143C)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (NRS Chapter 135)'
+  },
+  NH: {
+    name: 'New Hampshire',
+    fullName: 'State of New Hampshire',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'New Hampshire Revised Statutes Section 551:2-a',
+    antiLapseStatute: 'New Hampshire Revised Statutes Section 551:12',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (RSA Chapter 554-B)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (RSA 563:1 et seq.)'
+  },
+  NJ: {
+    name: 'New Jersey',
+    fullName: 'State of New Jersey',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'New Jersey Statutes Section 3B:3-4',
+    antiLapseStatute: 'New Jersey Statutes Section 3B:3-35',
+    communityProperty: false,
+    homesteadProvisions: false,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (N.J.S.A. 3B:14-61 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (N.J.S.A. 3B:3-32)'
+  },
+  NM: {
+    name: 'New Mexico',
+    fullName: 'State of New Mexico',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'New Mexico Statutes Section 45-2-504',
+    antiLapseStatute: 'New Mexico Statutes Section 45-2-603',
+    communityProperty: true,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (NMSA 1978 Section 46-9-1 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (NMSA Section 45-2-702)'
+  },
+  NY: {
+    name: 'New York',
+    fullName: 'State of New York',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'New York Estates, Powers and Trusts Law Section 3-2.1',
+    antiLapseStatute: 'New York Estates, Powers and Trusts Law Section 3-3.3',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'New York Fiduciary Access to Digital Assets Law (EPTL Article 13-A)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (EPTL Section 2-1.6)'
+  },
+  NC: {
+    name: 'North Carolina',
+    fullName: 'State of North Carolina',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'North Carolina General Statutes Section 31-11.6',
+    antiLapseStatute: 'North Carolina General Statutes Section 31-42',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (N.C.G.S. Chapter 36F)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (N.C.G.S. Section 28A-24-1 et seq.)'
+  },
+  ND: {
+    name: 'North Dakota',
+    fullName: 'State of North Dakota',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'North Dakota Century Code Section 30.1-08-04',
+    antiLapseStatute: 'North Dakota Century Code Section 30.1-09-03',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (NDCC Chapter 30.1-41)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (NDCC Section 30.1-10-02)'
+  },
+  OH: {
+    name: 'Ohio',
+    fullName: 'State of Ohio',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Ohio Revised Code Section 2107.24',
+    antiLapseStatute: 'Ohio Revised Code Section 2107.52',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (ORC Chapter 2137)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (ORC Section 2105.31 et seq.)'
+  },
+  OK: {
+    name: 'Oklahoma',
+    fullName: 'State of Oklahoma',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Oklahoma Statutes Title 84 Section 55',
+    antiLapseStatute: 'Oklahoma Statutes Title 84 Section 142',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (58 Okl. St. Section 1101 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (84 Okl. St. Section 231 et seq.)'
+  },
+  OR: {
+    name: 'Oregon',
+    fullName: 'State of Oregon',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Oregon Revised Statutes Section 112.232',
+    antiLapseStatute: 'Oregon Revised Statutes Section 112.395',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (ORS Chapter 112)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (ORS Section 112.572)'
+  },
+  PA: {
+    name: 'Pennsylvania',
+    fullName: 'Commonwealth of Pennsylvania',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Pennsylvania Consolidated Statutes Title 20 Section 3132.1',
+    antiLapseStatute: 'Pennsylvania Consolidated Statutes Title 20 Section 2514',
+    communityProperty: false,
+    homesteadProvisions: false,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (20 Pa.C.S. Chapter 39)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (20 Pa.C.S. Section 8502)'
+  },
+  RI: {
+    name: 'Rhode Island',
+    fullName: 'State of Rhode Island',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Rhode Island General Laws Section 33-5-7',
+    antiLapseStatute: 'Rhode Island General Laws Section 33-6-19',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (R.I. Gen. Laws Chapter 33-27)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (R.I. Gen. Laws Section 33-1.1-1 et seq.)'
+  },
+  SC: {
+    name: 'South Carolina',
+    fullName: 'State of South Carolina',
+    witnesses: 3, // South Carolina requires 3 witnesses
+    selfProvingAffidavit: true,
+    affidavitStatute: 'South Carolina Code Section 62-2-503',
+    antiLapseStatute: 'South Carolina Code Section 62-2-603',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (S.C. Code Section 62-1-401 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (S.C. Code Section 62-2-702)'
+  },
+  SD: {
+    name: 'South Dakota',
+    fullName: 'State of South Dakota',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'South Dakota Codified Laws Section 29A-2-504',
+    antiLapseStatute: 'South Dakota Codified Laws Section 29A-2-603',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (SDCL Chapter 29A-8)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (SDCL Section 29A-2-702)'
+  },
+  TN: {
+    name: 'Tennessee',
+    fullName: 'State of Tennessee',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Tennessee Code Section 32-1-104',
+    antiLapseStatute: 'Tennessee Code Section 32-3-105',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (Tenn. Code Section 35-8-201 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (Tenn. Code Section 31-3-102)'
+  },
+  TX: {
+    name: 'Texas',
+    fullName: 'State of Texas',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Texas Estates Code Section 251.104',
+    antiLapseStatute: 'Texas Estates Code Section 255.153',
+    communityProperty: true,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (Tex. Est. Code Chapter 2001)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (Tex. Est. Code Section 121.052)'
+  },
+  UT: {
+    name: 'Utah',
+    fullName: 'State of Utah',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Utah Code Section 75-2-504',
+    antiLapseStatute: 'Utah Code Section 75-2-603',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (Utah Code Chapter 75-9)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (Utah Code Section 75-2-702)'
+  },
+  VT: {
+    name: 'Vermont',
+    fullName: 'State of Vermont',
+    witnesses: 3, // Vermont requires 3 witnesses
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Vermont Statutes Title 14 Section 5',
+    antiLapseStatute: 'Vermont Statutes Title 14 Section 558',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (14 V.S.A. Chapter 125)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (14 V.S.A. Section 322 et seq.)'
+  },
+  VA: {
+    name: 'Virginia',
+    fullName: 'Commonwealth of Virginia',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Virginia Code Section 64.2-452',
+    antiLapseStatute: 'Virginia Code Section 64.2-418',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (Va. Code Section 64.2-109 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (Va. Code Section 64.2-2200 et seq.)'
+  },
+  WA: {
+    name: 'Washington',
+    fullName: 'State of Washington',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Revised Code of Washington Section 11.20.020',
+    antiLapseStatute: 'Revised Code of Washington Section 11.12.110',
+    communityProperty: true,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (RCW Chapter 11.120)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (RCW Chapter 11.05A)'
+  },
+  WV: {
+    name: 'West Virginia',
+    fullName: 'State of West Virginia',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'West Virginia Code Section 41-1-4',
+    antiLapseStatute: 'West Virginia Code Section 41-3-3',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (W. Va. Code Chapter 44D)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (W. Va. Code Section 42-5-1 et seq.)'
+  },
+  WI: {
+    name: 'Wisconsin',
+    fullName: 'State of Wisconsin',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Wisconsin Statutes Section 853.04',
+    antiLapseStatute: 'Wisconsin Statutes Section 854.06',
+    communityProperty: true, // Marital property state (similar to community property)
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (Wis. Stat. Chapter 711)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (Wis. Stat. Section 854.03)'
+  },
+  WY: {
+    name: 'Wyoming',
+    fullName: 'State of Wyoming',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'Wyoming Statutes Section 2-6-114',
+    antiLapseStatute: 'Wyoming Statutes Section 2-6-106',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (Wyo. Stat. Chapter 2-3)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (Wyo. Stat. Section 2-14-101 et seq.)'
+  },
+  DC: {
+    name: 'District of Columbia',
+    fullName: 'District of Columbia',
+    witnesses: 2,
+    selfProvingAffidavit: true,
+    affidavitStatute: 'D.C. Code Section 18-103',
+    antiLapseStatute: 'D.C. Code Section 18-308',
+    communityProperty: false,
+    homesteadProvisions: true,
+    digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (D.C. Code Section 21-2601.01 et seq.)',
+    simultaneousDeathAct: 'Uniform Simultaneous Death Act (D.C. Code Section 19-501 et seq.)'
+  }
+}
+
+/**
+ * Helper function to get state config with fallback to Florida
+ * This ensures backward compatibility
+ */
+export function getStateConfig(stateCode) {
+  return STATE_CONFIGS[stateCode] || STATE_CONFIGS.FL
+}
+
+/**
+ * Get list of community property states
+ */
+export const COMMUNITY_PROPERTY_STATES = Object.entries(STATE_CONFIGS)
+  .filter(([_, config]) => config.communityProperty)
+  .map(([code]) => code)
+
+/**
+ * Get list of states requiring 3 witnesses
+ */
+export const THREE_WITNESS_STATES = Object.entries(STATE_CONFIGS)
+  .filter(([_, config]) => config.witnesses === 3)
+  .map(([code]) => code)
+
+export default STATE_CONFIGS

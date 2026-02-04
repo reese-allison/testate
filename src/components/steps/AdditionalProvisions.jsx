@@ -1,9 +1,11 @@
 import React from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { Card, FormField, Alert } from '../ui'
+import { getStateConfig } from '../../constants'
 
-export function AdditionalProvisions({ data, onChange, errors = {} }) {
+export function AdditionalProvisions({ data, onChange, errors = {}, residenceState = 'FL' }) {
   const { digitalAssets, pets, funeral, realProperty, debtsAndTaxes } = data
+  const stateConfig = getStateConfig(residenceState)
 
   const handleDigitalAssetsChange = (field, value) => {
     onChange('digitalAssets', field, value)
@@ -498,7 +500,7 @@ export function AdditionalProvisions({ data, onChange, errors = {} }) {
 
       <Alert variant="info" title="These Provisions Are Optional">
         You don't need to complete all sections. Only include provisions that are relevant
-        to your situation. If you leave a section unchecked, standard Florida probate rules
+        to your situation. If you leave a section unchecked, standard {stateConfig.name} probate rules
         will apply.
       </Alert>
     </div>

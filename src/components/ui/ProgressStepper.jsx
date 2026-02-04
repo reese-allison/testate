@@ -1,7 +1,7 @@
 import React from 'react'
-import { Check } from 'lucide-react'
+import { Check, AlertTriangle } from 'lucide-react'
 
-export function ProgressStepper({ steps, currentStep, onStepClick }) {
+export function ProgressStepper({ steps, currentStep, onStepClick, stepValidation = [] }) {
   const progress = ((currentStep) / (steps.length - 1)) * 100
 
   const handleStepClick = (index) => {
@@ -39,13 +39,15 @@ export function ProgressStepper({ steps, currentStep, onStepClick }) {
           const isCompleted = index < currentStep
           const isCurrent = index === currentStep
           const isFuture = index > currentStep
+          const isValid = stepValidation[index] !== false
+          const hasError = isCompleted && !isValid
 
           return (
             <button
               key={index}
               onClick={() => handleStepClick(index)}
               onKeyDown={(e) => handleKeyDown(e, index)}
-              aria-label={`${step.label}, Step ${index + 1} of ${steps.length}${isCompleted ? ', completed' : isCurrent ? ', current step' : ''}`}
+              aria-label={`${step.label}, Step ${index + 1} of ${steps.length}${isCompleted ? (hasError ? ', has errors' : ', completed') : isCurrent ? ', current step' : ''}`}
               aria-current={isCurrent ? 'step' : undefined}
               className={`
                 flex flex-col items-center min-w-[80px] md:min-w-0 md:flex-1
@@ -59,15 +61,17 @@ export function ProgressStepper({ steps, currentStep, onStepClick }) {
                   font-medium text-sm transition-all duration-200
                   group-focus:ring-2 group-focus:ring-offset-2 group-focus:ring-blue-500
                   dark:group-focus:ring-offset-gray-900
-                  ${isCompleted
-                    ? 'bg-blue-600 text-white group-hover:bg-blue-700 group-hover:scale-110'
-                    : isCurrent
-                      ? 'bg-blue-600 text-white ring-4 ring-blue-100 dark:ring-blue-900 group-hover:bg-blue-700'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 group-hover:bg-gray-300 dark:group-hover:bg-gray-600 group-hover:scale-105'
+                  ${hasError
+                    ? 'bg-amber-500 text-white group-hover:bg-amber-600 group-hover:scale-110'
+                    : isCompleted
+                      ? 'bg-blue-600 text-white group-hover:bg-blue-700 group-hover:scale-110'
+                      : isCurrent
+                        ? 'bg-blue-600 text-white ring-4 ring-blue-100 dark:ring-blue-900 group-hover:bg-blue-700'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 group-hover:bg-gray-300 dark:group-hover:bg-gray-600 group-hover:scale-105'
                   }
                 `}
               >
-                {isCompleted ? <Check className="w-4 h-4" /> : index + 1}
+                {hasError ? <AlertTriangle className="w-4 h-4" /> : isCompleted ? <Check className="w-4 h-4" /> : index + 1}
               </div>
               <span
                 className={`

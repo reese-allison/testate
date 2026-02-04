@@ -3,8 +3,10 @@ import { FileText, Download, RotateCcw, CheckCircle, AlertCircle } from 'lucide-
 import { Card, Alert } from '../ui'
 import { generateWillText } from '../../utils/willTextGenerator'
 import { generatePDF } from '../../utils/pdfGenerator'
+import { getStateConfig } from '../../constants'
 
 export function ReviewGenerate({ formData, onReset }) {
+  const stateConfig = getStateConfig(formData.testator?.residenceState || 'FL')
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState(null)
   const [showThankYou, setShowThankYou] = useState(false)
@@ -43,7 +45,7 @@ export function ReviewGenerate({ formData, onReset }) {
     <div className="space-y-6">
       <Alert variant="warning" title="Review Carefully Before Generating">
         Please review all information below. Once generated, you'll need to print, sign, and
-        have the will properly witnessed according to Florida law (two witnesses and a notary
+        have the will properly witnessed according to {stateConfig.name} law ({stateConfig.witnesses} witnesses and a notary
         for the self-proving affidavit).
       </Alert>
 
@@ -222,16 +224,16 @@ export function ReviewGenerate({ formData, onReset }) {
             <strong>This is a template tool, not legal advice.</strong> The generated document
             is provided for informational purposes only.
           </p>
-          <p>To make this will legally valid in Florida, you must:</p>
+          <p>To make this will legally valid in {stateConfig.name}, you must:</p>
           <ul className="list-disc list-inside space-y-1">
             <li>Be at least 18 years old and of sound mind</li>
-            <li>Sign the will in the presence of two witnesses</li>
-            <li>Have both witnesses sign in your presence and each other's presence</li>
+            <li>Sign the will in the presence of {stateConfig.witnesses} witnesses</li>
+            <li>Have all witnesses sign in your presence and each other's presence</li>
             <li>For the self-proving affidavit: sign before a notary public with witnesses</li>
           </ul>
           <p className="font-medium mt-3">
             For complex estates, blended families, or business interests, consult a licensed
-            Florida attorney.
+            attorney in {stateConfig.name}.
           </p>
         </div>
       </Alert>

@@ -1,8 +1,10 @@
 import React from 'react'
 import { Plus, Trash2, AlertTriangle } from 'lucide-react'
 import { Card, FormField, Alert } from '../ui'
+import { getStateConfig } from '../../constants'
 
-export function Disinheritance({ data, onChange, errors = {} }) {
+export function Disinheritance({ data, onChange, errors = {}, residenceState = 'FL' }) {
+  const stateConfig = getStateConfig(residenceState)
   const addPerson = () => {
     const current = data.persons || []
     onChange('disinheritance', 'persons', [
@@ -25,7 +27,7 @@ export function Disinheritance({ data, onChange, errors = {} }) {
     <div className="space-y-6">
       <Alert variant="warning" title="Important: Disinheritance Considerations">
         <p className="mt-1">
-          Disinheritance is a serious decision with potential legal implications. In Florida:
+          Disinheritance is a serious decision with potential legal implications. In most states:
         </p>
         <ul className="list-disc list-inside space-y-1 mt-2">
           <li>A surviving spouse has rights to a portion of the estate regardless of the will (elective share)</li>
@@ -33,7 +35,7 @@ export function Disinheritance({ data, onChange, errors = {} }) {
           <li>Explicitly naming and disinheriting someone can help prevent will contests</li>
         </ul>
         <p className="mt-2 font-medium">
-          Consider consulting an attorney before disinheriting close family members.
+          Consider consulting an attorney in {stateConfig.name} before disinheriting close family members.
         </p>
       </Alert>
 
@@ -147,12 +149,12 @@ export function Disinheritance({ data, onChange, errors = {} }) {
         </Card>
       )}
 
-      <Alert variant="info" title="Florida Law on Spousal Rights">
+      <Alert variant="info" title={`${stateConfig.name} Law on Spousal Rights`}>
         <p className="mt-1">
-          In Florida, you cannot completely disinherit a surviving spouse. The spouse has a
-          right to an "elective share" of approximately 30% of the estate, regardless of what
-          the will says. If you wish to limit your spouse's inheritance, consult with a
-          Florida estate planning attorney about options such as prenuptial agreements.
+          In most states, you cannot completely disinherit a surviving spouse. The spouse typically has a
+          right to an "elective share" of the estate (often 30-50%), regardless of what
+          the will says. If you wish to limit your spouse's inheritance, consult with an
+          estate planning attorney in {stateConfig.name} about options such as prenuptial agreements.
         </p>
       </Alert>
     </div>

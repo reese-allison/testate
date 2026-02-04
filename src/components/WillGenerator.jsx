@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, Save, AlertCircle } from 'lucide-react'
 import { ProgressStepper, Alert } from './ui'
 import {
@@ -14,6 +14,7 @@ import {
 } from './steps'
 import { useWillState } from '../hooks/useWillState'
 import { validateStep } from '../utils/validation'
+import { getStateConfig } from '../constants'
 
 const STEPS = [
   { label: 'Your Information', shortLabel: 'You', component: 'testator' },
@@ -37,6 +38,17 @@ export function WillGenerator() {
     updateArray,
     resetForm
   } = useWillState()
+
+  // Get state configuration for current residence state
+  const stateConfig = getStateConfig(formData.testator?.residenceState || 'FL')
+
+  // Calculate validation status for all steps (for progress indicator)
+  const stepValidationStatus = useMemo(() => {
+    return STEPS.map((_, index) => {
+      const stepErrors = validateStep(index, formData)
+      return Object.keys(stepErrors).length === 0
+    })
+  }, [formData])
 
   // Clear specific error when field value changes
   const clearFieldError = (fieldName) => {
@@ -201,6 +213,7 @@ export function WillGenerator() {
               }}
               onChange={handleFieldChange}
               errors={errors}
+              residenceState={formData.testator?.residenceState}
             />
             <div className="mt-6">
               <CustomProvisions
@@ -217,6 +230,7 @@ export function WillGenerator() {
             data={formData.disinheritance}
             onChange={handleFieldChange}
             errors={errors}
+            residenceState={formData.testator?.residenceState}
           />
         )
       case 7:
@@ -238,6 +252,7 @@ export function WillGenerator() {
         steps={STEPS}
         currentStep={currentStep}
         onStepClick={handleStepClick}
+        stepValidation={stepValidationStatus}
       />
 
       {/* Save Notice */}
@@ -317,7 +332,7 @@ export function WillGenerator() {
             <strong>Disclaimer:</strong> This tool provides a template for informational purposes
             only and does not constitute legal advice. The use of this tool does not create an
             attorney-client relationship. For complex estates or specific legal questions, please
-            consult a licensed Florida attorney.
+            consult a licensed attorney in your state.
           </p>
         </div>
       </div>

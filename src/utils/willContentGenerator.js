@@ -583,8 +583,7 @@ function generateDistributionsToMinors(utmaAge, articleNumber) {
 
   content.push({
     type: 'paragraph',
-    text:
-      `Any receipt from such distribution is a complete discharge to my Personal Representative.`,
+    text: `Any receipt from such distribution is a complete discharge to my Personal Representative.`,
   })
 
   return {
@@ -862,8 +861,7 @@ function generateDisinheritance(persons, articleNumber, testator = {}) {
 
   content.push({
     type: 'paragraph',
-    text:
-      `I intentionally omit the following persons from any share of my estate:`,
+    text: `I intentionally omit the following persons from any share of my estate:`,
   })
 
   persons.forEach((person, index) => {

@@ -72,7 +72,9 @@ src/
 │   ├── useWillState.js  # Form state management
 │   └── useLocalStorage.js
 ├── utils/
-│   ├── willTextGenerator.js
+│   ├── willContentGenerator.js  # Will content structure
+│   ├── willTextGenerator.js     # Plain text output
+│   ├── willTextRenderer.js      # Text rendering
 │   ├── validators.js
 │   └── validation.js
 ├── App.jsx

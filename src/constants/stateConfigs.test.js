@@ -83,19 +83,24 @@ describe('getStateConfig', () => {
     expect(config.name).toBe('California')
   })
 
-  it('returns Florida config for invalid state code (backward compatibility)', () => {
+  it('returns null for invalid state code', () => {
     const config = getStateConfig('XX')
-    expect(config.name).toBe('Florida')
+    expect(config).toBeNull()
   })
 
-  it('returns Florida config for undefined (backward compatibility)', () => {
+  it('returns null for undefined', () => {
     const config = getStateConfig(undefined)
-    expect(config.name).toBe('Florida')
+    expect(config).toBeNull()
   })
 
-  it('returns Florida config for null (backward compatibility)', () => {
+  it('returns null for null', () => {
     const config = getStateConfig(null)
-    expect(config.name).toBe('Florida')
+    expect(config).toBeNull()
+  })
+
+  it('returns null for empty string', () => {
+    const config = getStateConfig('')
+    expect(config).toBeNull()
   })
 })
 

@@ -19,7 +19,8 @@ describe('useWillState', () => {
     expect(result.current.formData).toBeDefined()
     expect(result.current.formData.testator).toBeDefined()
     expect(result.current.formData.testator.fullName).toBe('')
-    expect(result.current.formData.testator.residenceState).toBe('FL')
+    expect(result.current.formData.testator.residenceState).toBe('') // No default state - user must select
+    expect(result.current.formData.testator.maritalStatus).toBe('') // No default - user must select
     expect(result.current.formData.executor).toBeDefined()
     expect(result.current.formData.children).toEqual([])
     expect(result.current.formData.specificGifts).toEqual([])
@@ -231,7 +232,7 @@ describe('useWillState', () => {
     expect(result.current.formData.children[0].name).toBe('Old Child')
 
     // Should have new fields with defaults
-    expect(result.current.formData.testator.residenceState).toBe('FL')
+    expect(result.current.formData.testator.residenceState).toBe('') // No default state
     expect(result.current.formData.customProvisions).toBeDefined()
     expect(result.current.formData.disinheritance).toBeDefined()
   })

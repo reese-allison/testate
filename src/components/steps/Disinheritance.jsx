@@ -1,10 +1,11 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import { Plus, Trash2, AlertTriangle } from 'lucide-react'
 import { Card, FormField, Alert } from '../ui'
 import { getStateConfig } from '../../constants'
 import { useArrayItemManager } from '../../hooks/useArrayItemManager'
 
-export function Disinheritance({ data, onChange, residenceState = 'FL' }) {
+export function Disinheritance({ data, onChange, residenceState = '' }) {
   const stateConfig = getStateConfig(residenceState)
 
   const {
@@ -28,8 +29,8 @@ export function Disinheritance({ data, onChange, residenceState = 'FL' }) {
           <li>Explicitly naming and disinheriting someone can help prevent will contests</li>
         </ul>
         <p className="mt-2 font-medium">
-          Consider consulting an attorney in {stateConfig.name} before disinheriting close family
-          members.
+          Consider consulting an attorney{stateConfig?.name ? ` in ${stateConfig.name}` : ''} before
+          disinheriting close family members.
         </p>
       </Alert>
 
@@ -145,14 +146,35 @@ export function Disinheritance({ data, onChange, residenceState = 'FL' }) {
         </Card>
       )}
 
-      <Alert variant="info" title={`${stateConfig.name} Law on Spousal Rights`}>
+      <Alert variant="info" title={`${stateConfig?.name || 'State'} Law on Spousal Rights`}>
         <p className="mt-1">
           In most states, you cannot completely disinherit a surviving spouse. The spouse typically
           has a right to an "elective share" of the estate (often 30-50%), regardless of what the
           will says. If you wish to limit your spouse's inheritance, consult with an estate planning
-          attorney in {stateConfig.name} about options such as prenuptial agreements.
+          attorney{stateConfig?.name ? ` in ${stateConfig.name}` : ''} about options such as
+          prenuptial agreements.
         </p>
       </Alert>
     </div>
   )
+}
+
+Disinheritance.propTypes = {
+  data: PropTypes.shape({
+    include: PropTypes.bool,
+    persons: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string,
+        name: PropTypes.string,
+        relationship: PropTypes.string,
+        reason: PropTypes.string,
+      })
+    ),
+  }).isRequired,
+  onChange: PropTypes.func.isRequired,
+  residenceState: PropTypes.string,
+}
+
+Disinheritance.defaultProps = {
+  residenceState: '',
 }

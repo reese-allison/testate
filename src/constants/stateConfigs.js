@@ -667,11 +667,12 @@ export const STATE_CONFIGS = {
 }
 
 /**
- * Helper function to get state config with fallback to Florida
- * This ensures backward compatibility
+ * Helper function to get state config
+ * Returns null if state code is invalid or not provided
  */
 export function getStateConfig(stateCode) {
-  return STATE_CONFIGS[stateCode] || STATE_CONFIGS.FL
+  if (!stateCode) return null
+  return STATE_CONFIGS[stateCode] || null
 }
 
 /**

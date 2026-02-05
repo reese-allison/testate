@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import { Plus, Trash2 } from 'lucide-react'
 import { Card, FormField, Alert } from '../ui'
 import { US_STATES, CHILD_RELATIONSHIP_OPTIONS } from '../../constants'
@@ -259,4 +260,37 @@ export function ChildrenGuardian({ data, guardian, onChange, onArrayChange, erro
       )}
     </div>
   )
+}
+
+ChildrenGuardian.propTypes = {
+  data: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string,
+      name: PropTypes.string,
+      relationship: PropTypes.string,
+      isMinor: PropTypes.bool,
+    })
+  ).isRequired,
+  guardian: PropTypes.shape({
+    name: PropTypes.string,
+    relationship: PropTypes.string,
+    address: PropTypes.string,
+    city: PropTypes.string,
+    state: PropTypes.string,
+    zip: PropTypes.string,
+    alternateName: PropTypes.string,
+    alternateRelationship: PropTypes.string,
+    alternateAddress: PropTypes.string,
+    alternateCity: PropTypes.string,
+    alternateState: PropTypes.string,
+    alternateZip: PropTypes.string,
+  }),
+  onChange: PropTypes.func.isRequired,
+  onArrayChange: PropTypes.func.isRequired,
+  errors: PropTypes.object,
+}
+
+ChildrenGuardian.defaultProps = {
+  guardian: {},
+  errors: {},
 }

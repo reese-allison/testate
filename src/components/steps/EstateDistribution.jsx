@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import { Plus, Trash2 } from 'lucide-react'
 import { Card, FormField, Alert } from '../ui'
 
@@ -60,7 +61,7 @@ export function EstateDistribution({ data, testator, children, onChange }) {
   }
 
   const getDistributionOptions = () => {
-    const options = []
+    const options = [{ value: '', label: 'Select distribution method...' }]
 
     if (isMarried) {
       options.push({ value: 'spouse', label: 'Everything to my spouse' })
@@ -113,6 +114,7 @@ export function EstateDistribution({ data, testator, children, onChange }) {
                   placeholder="50"
                   min={0}
                   max={100}
+                  step={1}
                 />
                 <FormField
                   label="To Children (divided equally)"
@@ -127,12 +129,15 @@ export function EstateDistribution({ data, testator, children, onChange }) {
                   placeholder="50"
                   min={0}
                   max={100}
+                  step={1}
                 />
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
+              <p className="text-sm text-gray-600 dark:text-gray-300" aria-live="polite">
                 Total: {Number(data.spouseShare) + Number(data.childrenShare)}%
                 {Number(data.spouseShare) + Number(data.childrenShare) !== 100 && (
-                  <span className="text-red-500 ml-2">(Must equal 100%)</span>
+                  <span className="text-red-500 ml-2" role="alert">
+                    (Must equal 100%)
+                  </span>
                 )}
               </p>
             </div>
@@ -187,6 +192,9 @@ export function EstateDistribution({ data, testator, children, onChange }) {
                       value={beneficiary.share}
                       onChange={e => updateCustomBeneficiary(index, 'share', e.target.value)}
                       placeholder="25"
+                      min={0}
+                      max={100}
+                      step={1}
                     />
                   </div>
                 </div>
@@ -209,10 +217,12 @@ export function EstateDistribution({ data, testator, children, onChange }) {
               </button>
 
               {data.customBeneficiaries && data.customBeneficiaries.length > 0 && (
-                <p className="text-sm text-gray-600 dark:text-gray-300">
+                <p className="text-sm text-gray-600 dark:text-gray-300" aria-live="polite">
                   Total: {getTotalCustomShare()}%
                   {getTotalCustomShare() !== 100 && (
-                    <span className="text-red-500 ml-2">(Must equal 100%)</span>
+                    <span className="text-red-500 ml-2" role="alert">
+                      (Must equal 100%)
+                    </span>
                   )}
                 </p>
               )}
@@ -250,4 +260,27 @@ export function EstateDistribution({ data, testator, children, onChange }) {
       </Alert>
     </div>
   )
+}
+
+EstateDistribution.propTypes = {
+  data: PropTypes.shape({
+    distributionType: PropTypes.string,
+    spouseShare: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    childrenShare: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    perStirpes: PropTypes.bool,
+    customBeneficiaries: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string,
+        name: PropTypes.string,
+        relationship: PropTypes.string,
+        share: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      })
+    ),
+  }).isRequired,
+  testator: PropTypes.shape({
+    maritalStatus: PropTypes.string,
+    spouseName: PropTypes.string,
+  }).isRequired,
+  children: PropTypes.array.isRequired,
+  onChange: PropTypes.func.isRequired,
 }

@@ -1,5 +1,5 @@
 import { getStateConfig } from '../constants/stateConfigs'
-import { toRoman } from './formatters'
+import { toRoman, toWords } from './formatters'
 
 export function generateWillText(formData) {
   const {
@@ -20,9 +20,11 @@ export function generateWillText(formData) {
     noContestClause = true,
   } = formData
 
-  // Get state configuration (defaults to FL for backward compatibility)
-  const stateCode = testator.residenceState || 'FL'
+  // Get state configuration - residenceState is required
+  const stateCode = testator.residenceState || ''
   const stateConfig = getStateConfig(stateCode)
+  const stateName = stateConfig?.name || '[STATE NOT SELECTED]'
+  const stateFullName = stateConfig?.fullName || '[STATE NOT SELECTED]'
   const countyOrParish = stateCode === 'LA' ? 'Parish' : 'County'
 
   const lines = []
@@ -35,8 +37,8 @@ export function generateWillText(formData) {
 
   // Preamble
   lines.push(
-    `I, ${testator.fullName}, a resident of ${testator.county} ${countyOrParish}, ${stateConfig.name}, ` +
-      `residing at ${testator.address}, ${testator.city}, ${stateConfig.name} ${testator.zip}, ` +
+    `I, ${testator.fullName || '[NAME]'}, a resident of ${testator.county || '[COUNTY]'} ${countyOrParish}, ${stateName}, ` +
+      `residing at ${testator.address || '[ADDRESS]'}, ${testator.city || '[CITY]'}, ${stateName} ${testator.zip || '[ZIP]'}, ` +
       `being of sound mind and disposing memory, do hereby declare this to be my Last Will and Testament, ` +
       `and I hereby revoke all wills and codicils previously made by me.`
   )
@@ -95,16 +97,48 @@ export function generateWillText(formData) {
   if (executor.bondRequired) {
     lines.push(`My Personal Representative shall be required to post a bond.`)
   } else {
-    lines.push(`My Personal Representative shall serve without bond.`)
+    lines.push(
+      `No bond or surety or other security shall be required of any Personal Representative ` +
+        `serving hereunder.`
+    )
   }
 
   lines.push('')
-  lines.push(`I grant my Personal Representative full power and authority to:`)
-  lines.push(`  (a) Take possession of and manage all my property;`)
-  lines.push(`  (b) Sell, lease, or mortgage any real or personal property;`)
-  lines.push(`  (c) Pay all debts, taxes, and expenses of administration;`)
-  lines.push(`  (d) Distribute my estate according to this Will;`)
-  lines.push(`  (e) Perform all acts necessary for proper estate administration.`)
+  lines.push(
+    `To the extent permitted by the laws of the ${stateFullName}, this Will is ` +
+      `intended as and shall be construed to be a nonintervention will, and after the probate ` +
+      `of this Will, no further proceedings in court shall be necessary other than to comply ` +
+      `with applicable statutes. The decision to administer my estate independently or under ` +
+      `court supervision shall be made solely by my Personal Representative.`
+  )
+
+  lines.push('')
+  lines.push(
+    `I grant my Personal Representative all powers conferred on personal representatives ` +
+      `and executors under the laws of the ${stateFullName}, including but not limited to the power to:`
+  )
+  lines.push(`  (a) Take possession of, manage, and control all property of my estate;`)
+  lines.push(
+    `  (b) Retain, sell at public or private sale, exchange, grant options on, invest and ` +
+      `reinvest in any kind of property, real or personal, for cash or on credit;`
+  )
+  lines.push(`  (c) Borrow money and encumber or pledge any property of my estate to secure loans;`)
+  lines.push(
+    `  (d) Lease any real or personal property for any term, even beyond estate administration;`
+  )
+  lines.push(`  (e) Hold property in bearer form or in the name of a nominee;`)
+  lines.push(`  (f) Divide and distribute property in cash or in kind, or partly in each;`)
+  lines.push(`  (g) Exercise all powers of an absolute owner of property;`)
+  lines.push(`  (h) Compromise, settle, and release claims in favor of or against my estate;`)
+  lines.push(`  (i) Execute and deliver deeds, contracts, and other instruments;`)
+  lines.push(`  (j) Employ attorneys, accountants, investment advisors, and other professionals;`)
+  lines.push(`  (k) Pay all debts, taxes, and expenses of administration;`)
+  lines.push(`  (l) Distribute my estate according to this Will.`)
+  lines.push('')
+  lines.push(
+    `The term "Personal Representative" wherever used herein shall include any executor, ` +
+      `executrix, administrator, or personal representative serving from time to time.`
+  )
   lines.push('')
 
   // Article - Guardian (if minor children)
@@ -129,6 +163,17 @@ export function generateWillText(formData) {
     lines.push('')
   }
 
+  // Article - Tangible Personal Property
+  lines.push(`ARTICLE ${toRoman(articleNumber++)} - TANGIBLE PERSONAL PROPERTY`)
+  lines.push('')
+  lines.push(
+    `All tangible personal property owned by me at the time of my death, including but not ` +
+      `limited to furniture, furnishings, household items, jewelry, clothing, automobiles, and ` +
+      `other personal effects, not otherwise specifically disposed of by this Will or by any ` +
+      `written memorandum, shall be distributed as part of my residuary estate as provided herein.`
+  )
+  lines.push('')
+
   // Article - Specific Gifts
   if (specificGifts.length > 0) {
     lines.push(`ARTICLE ${toRoman(articleNumber++)} - SPECIFIC GIFTS`)
@@ -138,13 +183,13 @@ export function generateWillText(formData) {
 
     specificGifts.forEach((gift, index) => {
       lines.push(
-        `${index + 1}. I give ${gift.description} to ${gift.beneficiary}` +
+        `${index + 1}. I give ${gift.description || '[DESCRIPTION]'} to ${gift.beneficiary || '[BENEFICIARY]'}` +
           `${gift.beneficiaryRelationship ? ` (${gift.beneficiaryRelationship})` : ''}.`
       )
 
       if (gift.alternativeBeneficiary) {
         lines.push(
-          `   If ${gift.beneficiary} does not survive me, this gift shall pass to ` +
+          `   If ${gift.beneficiary || '[BENEFICIARY]'} does not survive me, this gift shall pass to ` +
             `${gift.alternativeBeneficiary}.`
         )
       }
@@ -163,9 +208,9 @@ export function generateWillText(formData) {
 
     realProperty.items.forEach((property, index) => {
       lines.push(
-        `${index + 1}. The property located at ${property.address}` +
+        `${index + 1}. The property located at ${property.address || '[ADDRESS]'}` +
           `${property.description ? ` (${property.description})` : ''} ` +
-          `shall pass to ${property.beneficiary}.`
+          `shall pass to ${property.beneficiary || '[BENEFICIARY]'}.`
       )
       if (property.instructions) {
         lines.push(`   Special instructions: ${property.instructions}`)
@@ -178,9 +223,10 @@ export function generateWillText(formData) {
   lines.push(`ARTICLE ${toRoman(articleNumber++)} - RESIDUARY ESTATE`)
   lines.push('')
   lines.push(
-    `I give all the rest, residue, and remainder of my estate, whether real, personal, ` +
-      `or mixed, and wherever situated, including any property over which I may have power of ` +
-      `appointment (hereinafter referred to as my "residuary estate"), as follows:`
+    `I give all the rest, residue, and remainder of my estate, both real and personal, ` +
+      `of whatever kind and wherever situated, that I own or to which I shall be in any manner ` +
+      `entitled at the time of my death, including any property over which I may have power of ` +
+      `appointment (collectively referred to as my "residuary estate"), as follows:`
   )
   lines.push('')
 
@@ -189,12 +235,13 @@ export function generateWillText(formData) {
 
   if (residuaryEstate.distributionType === 'spouse' && testator.maritalStatus === 'married') {
     lines.push(
-      `To my spouse, ${testator.spouseName}, if my spouse survives me by ${survivorshipPeriod} days.`
+      `(a) To my spouse, ${testator.spouseName || '[SPOUSE]'}, if my spouse survives me by ${toWords(survivorshipPeriod)} days.`
     )
     distributionHandled = true
   } else if (residuaryEstate.distributionType === 'children' && children.length > 0) {
     lines.push(
-      `To my children, in equal shares${residuaryEstate.perStirpes ? ', per stirpes' : ''}.`
+      `(a) To my children, in equal shares${residuaryEstate.perStirpes ? ' (per stirpes)' : ''}, ` +
+        `if they survive me by ${toWords(survivorshipPeriod)} days.`
     )
     distributionHandled = true
   } else if (
@@ -203,38 +250,53 @@ export function generateWillText(formData) {
     children.length > 0
   ) {
     lines.push(
-      `${residuaryEstate.spouseShare}% to my spouse, ${testator.spouseName}, ` +
-        `and ${residuaryEstate.childrenShare}% to my children, in equal shares${residuaryEstate.perStirpes ? ', per stirpes' : ''}.`
+      `(a) ${toWords(residuaryEstate.spouseShare)} percent to my spouse, ${testator.spouseName || '[SPOUSE]'}, ` +
+        `and ${toWords(residuaryEstate.childrenShare)} percent to my children, in equal shares` +
+        `${residuaryEstate.perStirpes ? ' (per stirpes)' : ''}, ` +
+        `if they survive me by ${toWords(survivorshipPeriod)} days.`
     )
     distributionHandled = true
   } else if (
     residuaryEstate.distributionType === 'custom' &&
     residuaryEstate.customBeneficiaries?.length > 0
   ) {
+    lines.push(
+      `(a) To the following beneficiaries, if they survive me by ${toWords(survivorshipPeriod)} days:`
+    )
     residuaryEstate.customBeneficiaries.forEach(beneficiary => {
       lines.push(
-        `  - ${beneficiary.share}% to ${beneficiary.name}` +
+        `    - ${toWords(beneficiary.share || 0)} percent to ${beneficiary.name || '[BENEFICIARY]'}` +
           `${beneficiary.relationship ? ` (${beneficiary.relationship})` : ''}`
       )
     })
     distributionHandled = true
   }
 
-  // Fallback if no distribution was specified (should not happen with proper validation)
-  if (!distributionHandled) {
-    lines.push(`To be distributed according to the intestacy laws of the ${stateConfig.fullName}.`)
+  // Add anti-lapse provision
+  if (distributionHandled) {
+    lines.push('')
+    lines.push(
+      `(b) If any of the beneficiaries named above shall not survive me, decline the gift, ` +
+        `or are no longer in existence (together referred to as "predeceased"), then their share ` +
+        `shall pass to the surviving children of the predeceased beneficiary, if any, in equal shares` +
+        `${residuaryEstate.perStirpes ? ' (per stirpes)' : ''}. If the predeceased beneficiary has no ` +
+        `surviving children, then their share shall pass equally to the other beneficiaries named above ` +
+        `who survive me.`
+    )
+    lines.push('')
+    lines.push(
+      `(c) If none of the beneficiaries described in clauses (a) and (b) above shall survive me, ` +
+        `decline the gift, or are no longer in existence, then I give my residuary estate to those ` +
+        `who would take from me as if I were then to die without a will, unmarried, and the absolute ` +
+        `owner of my residuary estate, and a resident of the ${stateFullName}.`
+    )
+  } else {
+    // Fallback if no distribution was specified
+    lines.push(`To be distributed according to the intestacy laws of the ${stateFullName}.`)
     lines.push('')
     lines.push(
       `[NOTE: The distribution settings in this will may be incomplete. Please review ` +
         `the Estate Distribution section to ensure your wishes are properly specified.]`
-    )
-  }
-
-  if (residuaryEstate.perStirpes && children.length > 0) {
-    lines.push('')
-    lines.push(
-      `If any beneficiary named above does not survive me, their share shall pass to ` +
-        `their descendants, per stirpes.`
     )
   }
   lines.push('')
@@ -244,9 +306,38 @@ export function generateWillText(formData) {
   lines.push('')
   lines.push(
     `No beneficiary shall be entitled to receive any benefit under this Will unless ` +
-      `such beneficiary survives me by ${survivorshipPeriod} days. If a beneficiary fails to survive ` +
+      `such beneficiary survives me by ${toWords(survivorshipPeriod)} days. If a beneficiary fails to survive ` +
       `me by such period, such beneficiary shall be deemed to have predeceased me for all ` +
       `purposes of this Will.`
+  )
+  lines.push('')
+
+  // Article - Distributions to Minors or Incapacitated Beneficiaries
+  lines.push(
+    `ARTICLE ${toRoman(articleNumber++)} - DISTRIBUTIONS TO MINORS OR INCAPACITATED BENEFICIARIES`
+  )
+  lines.push('')
+  lines.push(
+    `Whenever any beneficiary of my estate is under a legal disability or, in the judgment ` +
+      `of my Personal Representative, is for any reason unable to manage their own affairs or ` +
+      `apply any distribution to the beneficiary's own best advantage, my Personal Representative ` +
+      `may, in their sole discretion, make distribution in any one or more of the following ways:`
+  )
+  lines.push('')
+  lines.push(`  (a) Directly to the beneficiary;`)
+  lines.push(`  (b) To the legal guardian or conservator of the beneficiary's property;`)
+  lines.push(`  (c) To a parent or person with whom the beneficiary resides;`)
+  const utmaAge = stateConfig?.utmaAge || 21
+  lines.push(
+    `  (d) If the beneficiary is under ${toWords(utmaAge)} years of age, to a custodian for the ` +
+      `beneficiary under the Uniform Transfers to Minors Act of any state;`
+  )
+  lines.push(`  (e) By expending such property directly for the benefit of the beneficiary.`)
+  lines.push('')
+  lines.push(
+    `The receipt by the beneficiary, guardian, conservator, custodian, or other person of ` +
+      `any distribution so made shall be a complete discharge to my Personal Representative ` +
+      `regarding such distribution.`
   )
   lines.push('')
 
@@ -255,7 +346,7 @@ export function generateWillText(formData) {
     lines.push(`ARTICLE ${toRoman(articleNumber++)} - DIGITAL ASSETS`)
     lines.push('')
     lines.push(
-      `Pursuant to the ${stateConfig.digitalAssetsAct}, I authorize my Personal Representative to access, manage, and dispose of ` +
+      `Pursuant to the ${stateConfig?.digitalAssetsAct || 'Revised Uniform Fiduciary Access to Digital Assets Act'}, I authorize my Personal Representative to access, manage, and dispose of ` +
         `my digital assets.`
     )
 
@@ -396,7 +487,9 @@ export function generateWillText(formData) {
       )
     } else if (debtsAndTaxes.paymentOrder === 'specific') {
       lines.push(`My debts, expenses, and taxes shall be paid as follows:`)
-      lines.push(debtsAndTaxes.specificInstructions)
+      if (debtsAndTaxes.specificInstructions) {
+        lines.push(debtsAndTaxes.specificInstructions)
+      }
     }
     lines.push('')
   } else {
@@ -421,7 +514,7 @@ export function generateWillText(formData) {
 
     disinheritance.persons.forEach((person, index) => {
       lines.push(
-        `${index + 1}. ${person.name}${person.relationship ? ` (${person.relationship})` : ''} ` +
+        `${index + 1}. ${person.name || '[NAME]'}${person.relationship ? ` (${person.relationship})` : ''} ` +
           `shall receive no benefit from my estate.`
       )
       if (person.reason) {
@@ -455,7 +548,7 @@ export function generateWillText(formData) {
       `it is difficult or impossible to determine who died first, it shall be conclusively ` +
       `presumed for purposes of this Will that such beneficiary predeceased me. This provision ` +
       `shall apply to all beneficiaries named herein, including my spouse, and shall be in ` +
-      `accordance with the ${stateConfig.simultaneousDeathAct}.`
+      `accordance with the ${stateConfig?.simultaneousDeathAct || 'Uniform Simultaneous Death Act'}.`
   )
   lines.push('')
 
@@ -479,7 +572,7 @@ export function generateWillText(formData) {
       `limited to the predeceasing of the beneficiary, disclaimer, or the non-existence of the ` +
       `property at my death, such gift shall lapse and become part of my residuary estate, ` +
       `unless an alternate beneficiary is specifically designated or unless the beneficiary is ` +
-      `a descendant of mine, in which case ${stateConfig.name}'s anti-lapse statute (${stateConfig.antiLapseStatute}) shall apply.`
+      `a descendant of mine, in which case ${stateName}'s anti-lapse statute (${stateConfig?.antiLapseStatute || 'the applicable state anti-lapse statute'}) shall apply.`
   )
   lines.push('')
 
@@ -498,7 +591,7 @@ export function generateWillText(formData) {
   lines.push('')
   lines.push(
     `A. Governing Law: This Will shall be governed by and construed in accordance with ` +
-      `the laws of the ${stateConfig.fullName}.`
+      `the laws of the ${stateFullName}.`
   )
   lines.push('')
   lines.push(
@@ -525,20 +618,20 @@ export function generateWillText(formData) {
   lines.push('')
 
   // State-specific property notice
-  if (stateConfig.homesteadProvisions) {
+  if (stateConfig?.homesteadProvisions) {
     lines.push(
-      `F. ${stateConfig.name} Homestead: I am aware that ${stateConfig.name} law provides special protections ` +
+      `F. ${stateName} Homestead: I am aware that ${stateName} law provides special protections ` +
         `for homestead property. If I own homestead property at my death, such property shall ` +
-        `pass in accordance with ${stateConfig.name} law, which may supersede the provisions of this Will ` +
+        `pass in accordance with ${stateName} law, which may supersede the provisions of this Will ` +
         `regarding such property.`
     )
     lines.push('')
   }
 
   // Community property notice
-  if (stateConfig.communityProperty) {
+  if (stateConfig?.communityProperty) {
     lines.push(
-      `${stateConfig.homesteadProvisions ? 'G' : 'F'}. Community Property: I am aware that ${stateConfig.name} is a community property state. ` +
+      `${stateConfig?.homesteadProvisions ? 'G' : 'F'}. Community Property: I am aware that ${stateName} is a community property state. ` +
         `Property acquired during marriage may be subject to community property laws, which may ` +
         `affect the disposition of certain assets under this Will.`
     )
@@ -550,7 +643,7 @@ export function generateWillText(formData) {
   lines.push('')
   lines.push(
     `IN WITNESS WHEREOF, I have signed this Last Will and Testament on this _____ day ` +
-      `of _________________, 20_____, at ${testator.county} ${countyOrParish}, ${stateConfig.name}.`
+      `of _________________, 20_____, at ${testator.county} ${countyOrParish}, ${stateName}.`
   )
   lines.push('')
   lines.push('')
@@ -560,24 +653,41 @@ export function generateWillText(formData) {
   lines.push('')
 
   // Attestation Clause
-  lines.push('ATTESTATION CLAUSE')
+  lines.push('ATTESTATION OF WITNESSES')
   lines.push('')
   lines.push(
-    `We, the undersigned witnesses, declare that the person who signed this Will, ` +
-      `or asked another to sign for them, did so in our presence, and that we believe this person ` +
-      `to be of sound mind. We have signed this Will as witnesses in the presence of the Testator ` +
-      `and in the presence of each other.`
+    `We, the undersigned witnesses, at the Testator's request, sign our names to this ` +
+      `instrument, being first duly sworn, and do hereby declare to any authority that may be ` +
+      `concerned that the Testator signed and executed this instrument as the Testator's Last ` +
+      `Will and Testament, and that the Testator signed it willingly, and that each of us, in ` +
+      `the presence and hearing of the Testator, hereby signs this Will as witness to the ` +
+      `Testator's signing.`
+  )
+  lines.push('')
+  lines.push(
+    `We further declare that to the best of our knowledge the Testator is eighteen years ` +
+      `of age or older, of sound mind, and under no constraint or undue influence.`
   )
   lines.push('')
   lines.push('')
 
   // Generate witness signature blocks based on state requirement
-  for (let i = 1; i <= stateConfig.witnesses; i++) {
-    lines.push('_________________________________________    ________________________________')
-    lines.push(`Witness ${i} Signature                          Printed Name`)
+  const numWitnesses = stateConfig?.witnesses || 2
+  for (let i = 1; i <= numWitnesses; i++) {
+    lines.push('_________________________________________')
+    lines.push(`Witness ${i} Signature`)
+    lines.push('')
+    lines.push('_________________________________________')
+    lines.push(`Witness ${i} Printed Name`)
+    lines.push('')
+    lines.push('_________________________________________')
+    lines.push('Date')
     lines.push('')
     lines.push('_________________________________________')
     lines.push('Address')
+    lines.push('')
+    lines.push('_________________________________________')
+    lines.push('City, State, ZIP')
     lines.push('')
     lines.push('')
   }
@@ -585,19 +695,17 @@ export function generateWillText(formData) {
   // Self-Proving Affidavit
   lines.push('='.repeat(60))
   lines.push('SELF-PROVING AFFIDAVIT')
-  lines.push(`(Pursuant to ${stateConfig.affidavitStatute})`)
+  lines.push(`(Pursuant to ${stateConfig?.affidavitStatute || '[STATE AFFIDAVIT STATUTE]'})`)
   lines.push('='.repeat(60))
   lines.push('')
-  lines.push(`STATE OF ${stateConfig.name.toUpperCase()}`)
-  lines.push(`${countyOrParish.toUpperCase()} OF ${testator.county.toUpperCase()}`)
+  lines.push(`STATE OF ${stateName.toUpperCase()}`)
+  lines.push(`${countyOrParish.toUpperCase()} OF ${(testator.county || '[COUNTY]').toUpperCase()}`)
   lines.push('')
 
   // Generate witness names in affidavit based on state requirement
-  const witnessPlaceholders = Array(stateConfig.witnesses)
-    .fill('_________________________')
-    .join(', and ')
+  const witnessPlaceholders = Array(numWitnesses).fill('_________________________').join(', and ')
   lines.push(
-    `We, ${testator.fullName}, ${witnessPlaceholders}, ` +
+    `We, ${testator.fullName || '[NAME]'}, ${witnessPlaceholders}, ` +
       `the Testator and the witnesses, respectively, whose names are signed to the foregoing ` +
       `instrument, being first duly sworn, do hereby declare to the undersigned authority that ` +
       `the Testator signed and executed the instrument as the Testator's Last Will and that the ` +
@@ -610,12 +718,12 @@ export function generateWillText(formData) {
   lines.push('')
   lines.push('')
   lines.push('_________________________________________')
-  lines.push(`${testator.fullName}, Testator`)
+  lines.push(`${testator.fullName || '[NAME]'}, Testator`)
   lines.push('')
   lines.push('')
 
   // Generate witness signature blocks for affidavit
-  for (let i = 1; i <= stateConfig.witnesses; i++) {
+  for (let i = 1; i <= numWitnesses; i++) {
     lines.push('_________________________________________')
     lines.push(`Witness ${i}`)
     lines.push('')
@@ -629,7 +737,7 @@ export function generateWillText(formData) {
   lines.push('')
   lines.push('')
   lines.push('_________________________________________')
-  lines.push(`Notary Public, ${stateConfig.fullName}`)
+  lines.push(`Notary Public, ${stateFullName}`)
   lines.push('')
   lines.push('My Commission Expires: ___________________')
   lines.push('')

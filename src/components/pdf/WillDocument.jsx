@@ -176,8 +176,8 @@ function WillDocument({ formData }) {
     noContestClause = true,
   } = formData || {}
 
-  // Get state configuration (defaults to FL for backward compatibility)
-  const stateCode = testator.residenceState || 'FL'
+  // Get state configuration - residenceState is required
+  const stateCode = testator.residenceState
   const stateConfig = getStateConfig(stateCode)
   const countyOrParish = stateCode === 'LA' ? 'Parish' : 'County'
 

@@ -29,7 +29,7 @@ const STEPS = [
 export function WillGenerator() {
   const [currentStep, setCurrentStep] = useState(0)
   const [errors, setErrors] = useState({})
-  const { formData, updateField, updateArray, resetForm } = useWillState()
+  const { formData, setFormData, updateField, updateArray, resetForm } = useWillState()
 
   // Confirmation dialog state
   const [confirmDialog, setConfirmDialog] = useState({
@@ -99,6 +99,17 @@ export function WillGenerator() {
       setErrors({})
     },
     [updateArray]
+  )
+
+  // Handler for top-level form fields (like survivorshipPeriod)
+  const handleTopLevelChange = useCallback(
+    (field, value) => {
+      setFormData(prev => ({
+        ...prev,
+        [field]: value,
+      }))
+    },
+    [setFormData]
   )
 
   const handleNext = useCallback(() => {
@@ -241,8 +252,10 @@ export function WillGenerator() {
                 funeral: formData.funeral,
                 realProperty: formData.realProperty,
                 debtsAndTaxes: formData.debtsAndTaxes,
+                survivorshipPeriod: formData.survivorshipPeriod,
               }}
               onChange={handleFieldChange}
+              onTopLevelChange={handleTopLevelChange}
               errors={errors}
               residenceState={formData.testator?.residenceState}
             />

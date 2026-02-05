@@ -1,11 +1,8 @@
-import React from 'react'
+import React, { useMemo } from 'react'
+import PropTypes from 'prop-types'
+import { getCountyByState } from '@nickgraffis/us-counties'
 import { Card, FormField, Alert } from '../ui'
-import {
-  FLORIDA_COUNTIES,
-  MARITAL_STATUS_OPTIONS,
-  US_STATES,
-  getStateConfig,
-} from '../../constants'
+import { MARITAL_STATUS_OPTIONS, US_STATES, getStateConfig } from '../../constants'
 
 export function TestatorInfo({ data, onChange, errors = {} }) {
   const handleChange = e => {
@@ -13,19 +10,29 @@ export function TestatorInfo({ data, onChange, errors = {} }) {
     onChange('testator', name, value)
 
     // When residence state changes, also update the address state field
-    // and clear county since it may not apply to the new state
+    // and clear county since it won't apply to the new state
     if (name === 'residenceState') {
       const stateConfig = getStateConfig(value)
       onChange('testator', 'state', stateConfig.name)
-      // Clear county when state changes since Florida counties won't apply
-      if (value !== 'FL') {
-        onChange('testator', 'county', '')
-      }
+      onChange('testator', 'county', '')
     }
   }
 
-  const selectedStateConfig = getStateConfig(data.residenceState || 'FL')
-  const isFloridaResident = data.residenceState === 'FL' || !data.residenceState
+  const selectedStateConfig = data.residenceState ? getStateConfig(data.residenceState) : null
+  const stateCode = data.residenceState || ''
+  const isLouisiana = stateCode === 'LA'
+
+  // Get counties for the selected state (memoized to avoid recalculating on every render)
+  const countyOptions = useMemo(() => {
+    const counties = getCountyByState(stateCode) || []
+    const label = isLouisiana ? 'Select your parish...' : 'Select your county...'
+    return [
+      { value: '', label },
+      ...counties
+        .map(c => ({ value: c.name, label: c.name }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    ]
+  }, [stateCode, isLouisiana])
 
   return (
     <div className="space-y-6">
@@ -37,7 +44,7 @@ export function TestatorInfo({ data, onChange, errors = {} }) {
           label="State of Residence"
           name="residenceState"
           type="select"
-          value={data.residenceState || 'FL'}
+          value={data.residenceState}
           onChange={handleChange}
           required
           error={errors.residenceState}
@@ -48,7 +55,7 @@ export function TestatorInfo({ data, onChange, errors = {} }) {
           tooltip="Select the state where you currently legally reside. This determines which state's laws will govern your will."
         />
 
-        {selectedStateConfig.communityProperty && (
+        {selectedStateConfig?.communityProperty && (
           <Alert variant="info" title="Community Property State" className="mt-4">
             {selectedStateConfig.name} is a community property state. Property acquired during
             marriage is generally considered jointly owned by both spouses. This may affect how you
@@ -56,7 +63,7 @@ export function TestatorInfo({ data, onChange, errors = {} }) {
           </Alert>
         )}
 
-        {selectedStateConfig.witnesses === 3 && (
+        {selectedStateConfig?.witnesses === 3 && (
           <Alert variant="info" title="Witness Requirement" className="mt-4">
             {selectedStateConfig.name} requires {selectedStateConfig.witnesses} witnesses for a
             valid will, which is more than most states.
@@ -109,7 +116,11 @@ export function TestatorInfo({ data, onChange, errors = {} }) {
               type="select"
               value={data.state}
               onChange={handleChange}
-              options={[{ value: selectedStateConfig.name, label: selectedStateConfig.name }]}
+              options={
+                selectedStateConfig
+                  ? [{ value: selectedStateConfig.name, label: selectedStateConfig.name }]
+                  : [{ value: '', label: 'Select state above' }]
+              }
               disabled
               className="col-span-1"
             />
@@ -126,33 +137,22 @@ export function TestatorInfo({ data, onChange, errors = {} }) {
             />
           </div>
 
-          {isFloridaResident ? (
-            <FormField
-              label="County"
-              name="county"
-              type="select"
-              value={data.county}
-              onChange={handleChange}
-              required
-              error={errors.county}
-              options={[
-                { value: '', label: 'Select your county...' },
-                ...FLORIDA_COUNTIES.map(c => ({ value: c, label: c })),
-              ]}
-              tooltip="Select the Florida county where you currently reside."
-            />
-          ) : (
-            <FormField
-              label="County/Parish"
-              name="county"
-              value={data.county}
-              onChange={handleChange}
-              placeholder={data.residenceState === 'LA' ? 'Enter your parish' : 'Enter your county'}
-              required
-              error={errors.county}
-              tooltip={`Enter the ${data.residenceState === 'LA' ? 'parish' : 'county'} where you currently reside in ${selectedStateConfig.name}.`}
-            />
-          )}
+          <FormField
+            label={isLouisiana ? 'Parish' : 'County'}
+            name="county"
+            type="select"
+            value={data.county}
+            onChange={handleChange}
+            required
+            error={errors.county}
+            options={countyOptions}
+            disabled={!selectedStateConfig}
+            tooltip={
+              selectedStateConfig
+                ? `Select the ${isLouisiana ? 'parish' : 'county'} where you currently reside in ${selectedStateConfig.name}.`
+                : 'Select your state first.'
+            }
+          />
         </div>
       </Card>
 
@@ -187,14 +187,40 @@ export function TestatorInfo({ data, onChange, errors = {} }) {
         </div>
       </Card>
 
-      <Alert variant="info" title={`${selectedStateConfig.name} Residency`}>
-        This will is governed by {selectedStateConfig.name} law. The will must be executed according
-        to {selectedStateConfig.name} requirements, including being signed by you and witnessed by{' '}
-        {selectedStateConfig.witnesses}{' '}
-        {selectedStateConfig.witnesses === 1 ? 'witness' : 'witnesses'}.
-        {!isFloridaResident &&
-          ' For state-specific legal advice, consult a licensed attorney in your state.'}
-      </Alert>
+      {selectedStateConfig ? (
+        <Alert variant="info" title={`${selectedStateConfig.name} Residency`}>
+          This will is governed by {selectedStateConfig.name} law. The will must be executed
+          according to {selectedStateConfig.name} requirements, including being signed by you and
+          witnessed by {selectedStateConfig.witnesses}{' '}
+          {selectedStateConfig.witnesses === 1 ? 'witness' : 'witnesses'}. For state-specific legal
+          advice, consult a licensed attorney in your state.
+        </Alert>
+      ) : (
+        <Alert variant="warning" title="State Required">
+          Please select your state of residence above. Your will must comply with your state's
+          specific legal requirements.
+        </Alert>
+      )}
     </div>
   )
+}
+
+TestatorInfo.propTypes = {
+  data: PropTypes.shape({
+    fullName: PropTypes.string,
+    address: PropTypes.string,
+    city: PropTypes.string,
+    state: PropTypes.string,
+    zip: PropTypes.string,
+    county: PropTypes.string,
+    maritalStatus: PropTypes.string,
+    spouseName: PropTypes.string,
+    residenceState: PropTypes.string,
+  }).isRequired,
+  onChange: PropTypes.func.isRequired,
+  errors: PropTypes.object,
+}
+
+TestatorInfo.defaultProps = {
+  errors: {},
 }

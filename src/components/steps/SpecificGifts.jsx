@@ -1,9 +1,11 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import { Plus, Trash2 } from 'lucide-react'
 import { Card, FormField, Alert } from '../ui'
 import { useArrayItemManager } from '../../hooks/useArrayItemManager'
 
 const GIFT_TYPES = [
+  { value: '', label: 'Select gift type...' },
   { value: 'cash', label: 'Cash/Money' },
   { value: 'property', label: 'Real Property (House, Land)' },
   { value: 'vehicle', label: 'Vehicle' },
@@ -172,4 +174,24 @@ export function SpecificGifts({ data, onChange, errors = {} }) {
       </Alert>
     </div>
   )
+}
+
+SpecificGifts.propTypes = {
+  data: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string,
+      type: PropTypes.string,
+      description: PropTypes.string,
+      beneficiary: PropTypes.string,
+      beneficiaryRelationship: PropTypes.string,
+      alternativeBeneficiary: PropTypes.string,
+      conditions: PropTypes.string,
+    })
+  ).isRequired,
+  onChange: PropTypes.func.isRequired,
+  errors: PropTypes.object,
+}
+
+SpecificGifts.defaultProps = {
+  errors: {},
 }

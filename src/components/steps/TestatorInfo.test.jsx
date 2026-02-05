@@ -73,7 +73,7 @@ describe('TestatorInfo', () => {
     expect(screen.getByText('Full name is required')).toBeInTheDocument()
   })
 
-  it('shows Florida county dropdown for FL residents', () => {
+  it('shows county dropdown for all states', () => {
     const onChange = vi.fn()
     render(<TestatorInfo data={defaultData} onChange={onChange} />)
 
@@ -82,13 +82,22 @@ describe('TestatorInfo', () => {
     expect(screen.getByText('Select your county...')).toBeInTheDocument()
   })
 
-  it('shows county text input for non-FL residents', () => {
+  it('shows county dropdown for non-FL states', () => {
     const onChange = vi.fn()
-    const nonFLData = { ...defaultData, residenceState: 'CA', state: 'California' }
-    render(<TestatorInfo data={nonFLData} onChange={onChange} />)
+    const caData = { ...defaultData, residenceState: 'CA', state: 'California' }
+    render(<TestatorInfo data={caData} onChange={onChange} />)
 
-    const countyInput = screen.getByLabelText(/County\/Parish/)
-    expect(countyInput.tagName).toBe('INPUT')
+    const countySelect = screen.getByLabelText(/County/)
+    expect(countySelect.tagName).toBe('SELECT')
+  })
+
+  it('shows parish label for Louisiana', () => {
+    const onChange = vi.fn()
+    const laData = { ...defaultData, residenceState: 'LA', state: 'Louisiana' }
+    render(<TestatorInfo data={laData} onChange={onChange} />)
+
+    expect(screen.getByLabelText(/Parish/)).toBeInTheDocument()
+    expect(screen.getByText('Select your parish...')).toBeInTheDocument()
   })
 
   it('shows community property warning for community property states', () => {

@@ -142,7 +142,7 @@ describe('generateWillText', () => {
       formData.executor.bondRequired = false
       const text = generateWillText(formData)
 
-      expect(text).toContain('shall serve without bond')
+      expect(text).toContain('No bond or surety or other security shall be required')
     })
 
     it('specifies bond required when bondRequired is true', () => {
@@ -157,9 +157,9 @@ describe('generateWillText', () => {
       const formData = createMinimalFormData()
       const text = generateWillText(formData)
 
-      expect(text).toContain('Take possession of and manage all my property')
-      expect(text).toContain('Sell, lease, or mortgage any real or personal property')
-      expect(text).toContain('Pay all debts, taxes, and expenses')
+      expect(text).toContain('Take possession of, manage, and control all property')
+      expect(text).toContain('Retain, sell at public or private sale')
+      expect(text).toContain('Pay all debts, taxes, and expenses of administration')
     })
   })
 
@@ -351,7 +351,7 @@ describe('generateWillText', () => {
       formData.residuaryEstate.distributionType = 'spouse'
       const text = generateWillText(formData)
 
-      expect(text).toContain('To my spouse, Jane Smith, if my spouse survives me by 30 days')
+      expect(text).toContain('To my spouse, Jane Smith, if my spouse survives me by thirty days')
     })
 
     it('distributes to children equally', () => {
@@ -361,7 +361,7 @@ describe('generateWillText', () => {
       formData.residuaryEstate.perStirpes = true
       const text = generateWillText(formData)
 
-      expect(text).toContain('To my children, in equal shares, per stirpes')
+      expect(text).toContain('To my children, in equal shares (per stirpes)')
     })
 
     it('handles custom beneficiaries', () => {
@@ -373,8 +373,8 @@ describe('generateWillText', () => {
       ]
       const text = generateWillText(formData)
 
-      expect(text).toContain('50% to Person A (Friend)')
-      expect(text).toContain('50% to Person B')
+      expect(text).toContain('fifty percent to Person A (Friend)')
+      expect(text).toContain('fifty percent to Person B')
     })
 
     it('falls back to intestacy when spouse distribution selected but not married', () => {
@@ -412,7 +412,7 @@ describe('generateWillText', () => {
       formData.survivorshipPeriod = 30
       const text = generateWillText(formData)
 
-      expect(text).toContain('survives me by 30 days')
+      expect(text).toContain('survives me by thirty days')
     })
 
     it('uses custom survivorship period', () => {
@@ -420,7 +420,7 @@ describe('generateWillText', () => {
       formData.survivorshipPeriod = 60
       const text = generateWillText(formData)
 
-      expect(text).toContain('survives me by 60 days')
+      expect(text).toContain('survives me by sixty days')
     })
   })
 
@@ -737,20 +737,21 @@ describe('generateWillText', () => {
       const formData = createMinimalFormData()
       const text = generateWillText(formData)
 
-      expect(text).toContain('ATTESTATION CLAUSE')
+      expect(text).toContain('ATTESTATION OF WITNESSES')
       expect(text).toContain('Witness 1 Signature')
       expect(text).toContain('Witness 2 Signature')
     })
   })
 
   describe('Multi-State Support', () => {
-    it('defaults to Florida when residenceState is not set', () => {
+    it('shows placeholder when residenceState is not set', () => {
       const formData = createMinimalFormData()
       delete formData.testator.residenceState
       const text = generateWillText(formData)
 
-      expect(text).toContain('State of Florida')
-      expect(text).toContain('Florida Statutes Section 732.503')
+      // When no state is selected, placeholder text is shown
+      expect(text).toContain('[STATE NOT SELECTED]')
+      expect(text).toContain('[STATE AFFIDAVIT STATUTE]')
     })
 
     it('uses California law when residenceState is CA', () => {

@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import { Card, FormField, Alert } from '../ui'
 import { US_STATES } from '../../constants'
 
@@ -178,4 +179,28 @@ export function ExecutorInfo({ data, onChange, errors = {} }) {
       </Alert>
     </div>
   )
+}
+
+ExecutorInfo.propTypes = {
+  data: PropTypes.shape({
+    name: PropTypes.string,
+    relationship: PropTypes.string,
+    address: PropTypes.string,
+    city: PropTypes.string,
+    state: PropTypes.string,
+    zip: PropTypes.string,
+    alternateName: PropTypes.string,
+    alternateRelationship: PropTypes.string,
+    alternateAddress: PropTypes.string,
+    alternateCity: PropTypes.string,
+    alternateState: PropTypes.string,
+    alternateZip: PropTypes.string,
+    bondRequired: PropTypes.bool,
+  }).isRequired,
+  onChange: PropTypes.func.isRequired,
+  errors: PropTypes.object,
+}
+
+ExecutorInfo.defaultProps = {
+  errors: {},
 }

@@ -28,6 +28,7 @@ export const FormField = memo(function FormField({
   maxLength,
   min,
   max,
+  step,
 }) {
   const errorId = error ? `${name}-error` : undefined
   const baseInputClass = `
@@ -125,6 +126,7 @@ export const FormField = memo(function FormField({
         maxLength={maxLength || MAX_LENGTHS[type] || MAX_LENGTHS.default}
         min={min}
         max={max}
+        step={step}
         className={baseInputClass}
         {...commonAriaProps}
       />
@@ -204,4 +206,5 @@ FormField.propTypes = {
   maxLength: PropTypes.number,
   min: PropTypes.number,
   max: PropTypes.number,
+  step: PropTypes.number,
 }

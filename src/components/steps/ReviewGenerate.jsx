@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react'
+import PropTypes from 'prop-types'
 import { Download, RotateCcw, AlertCircle } from 'lucide-react'
 import { Card, Alert } from '../ui'
 import { generateWillText } from '../../utils/willTextGenerator'
@@ -47,7 +48,9 @@ export function ReviewGenerate({ formData, onReset }) {
       await generatePDF(formData)
       setShowThankYou(true)
     } catch (err) {
-      console.error('PDF generation error:', err)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('PDF generation error:', err)
+      }
       setError('Failed to generate PDF. Please try again.')
     } finally {
       setIsGenerating(false)
@@ -316,4 +319,9 @@ export function ReviewGenerate({ formData, onReset }) {
       </Alert>
     </div>
   )
+}
+
+ReviewGenerate.propTypes = {
+  formData: PropTypes.object.isRequired,
+  onReset: PropTypes.func.isRequired,
 }

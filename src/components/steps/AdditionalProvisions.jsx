@@ -1,11 +1,25 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import { Plus, Trash2 } from 'lucide-react'
 import { Card, FormField, Alert } from '../ui'
 import { getStateConfig } from '../../constants'
 import { useArrayItemManager } from '../../hooks/useArrayItemManager'
 
-export function AdditionalProvisions({ data, onChange, errors = {}, residenceState = 'FL' }) {
-  const { digitalAssets, pets, funeral, realProperty, debtsAndTaxes } = data
+const SURVIVORSHIP_PERIOD_OPTIONS = [
+  { value: '', label: 'Select period...' },
+  { value: '30', label: '30 days (recommended)' },
+  { value: '45', label: '45 days' },
+  { value: '60', label: '60 days' },
+]
+
+export function AdditionalProvisions({
+  data,
+  onChange,
+  onTopLevelChange,
+  errors = {},
+  residenceState = '',
+}) {
+  const { digitalAssets, pets, funeral, realProperty, debtsAndTaxes, survivorshipPeriod } = data
   const stateConfig = getStateConfig(residenceState)
 
   const handleDigitalAssetsChange = (field, value) => {
@@ -36,6 +50,22 @@ export function AdditionalProvisions({ data, onChange, errors = {}, residenceSta
 
   return (
     <div className="space-y-6">
+      {/* Survivorship Period */}
+      <Card
+        title="Survivorship Period"
+        description="Beneficiaries must survive you by this period to inherit. This prevents double probate if a beneficiary dies shortly after you."
+      >
+        <FormField
+          label="Survivorship Period"
+          name="survivorshipPeriod"
+          type="select"
+          value={survivorshipPeriod?.toString() || '30'}
+          onChange={e => onTopLevelChange?.('survivorshipPeriod', Number(e.target.value))}
+          options={SURVIVORSHIP_PERIOD_OPTIONS}
+          tooltip="If a beneficiary does not survive you by this many days, they are treated as having predeceased you and their share passes to alternate beneficiaries."
+        />
+      </Card>
+
       {/* Digital Assets Section */}
       <Card
         title="Digital Assets"
@@ -463,6 +493,7 @@ export function AdditionalProvisions({ data, onChange, errors = {}, residenceSta
                 value={debtsAndTaxes.paymentOrder}
                 onChange={e => handleDebtsChange('paymentOrder', e.target.value)}
                 options={[
+                  { value: '', label: 'Select payment order...' },
                   { value: 'residuary', label: 'Pay from residuary estate first' },
                   { value: 'proportional', label: 'Pay proportionally from all assets' },
                   { value: 'specific', label: 'Pay from specific assets (specify below)' },
@@ -486,9 +517,30 @@ export function AdditionalProvisions({ data, onChange, errors = {}, residenceSta
 
       <Alert variant="info" title="These Provisions Are Optional">
         You don't need to complete all sections. Only include provisions that are relevant to your
-        situation. If you leave a section unchecked, standard {stateConfig.name} probate rules will
-        apply.
+        situation. If you leave a section unchecked, standard {stateConfig?.name || 'state'} probate
+        rules will apply.
       </Alert>
     </div>
   )
+}
+
+AdditionalProvisions.propTypes = {
+  data: PropTypes.shape({
+    digitalAssets: PropTypes.object,
+    pets: PropTypes.object,
+    funeral: PropTypes.object,
+    realProperty: PropTypes.object,
+    debtsAndTaxes: PropTypes.object,
+    survivorshipPeriod: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  }).isRequired,
+  onChange: PropTypes.func.isRequired,
+  onTopLevelChange: PropTypes.func,
+  errors: PropTypes.object,
+  residenceState: PropTypes.string,
+}
+
+AdditionalProvisions.defaultProps = {
+  onTopLevelChange: null,
+  errors: {},
+  residenceState: '',
 }

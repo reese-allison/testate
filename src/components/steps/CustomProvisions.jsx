@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import { Plus, Trash2 } from 'lucide-react'
 import { Card, FormField, Alert } from '../ui'
 import { useArrayItemManager } from '../../hooks/useArrayItemManager'
@@ -100,4 +101,23 @@ export function CustomProvisions({ data, onChange, errors = {} }) {
       </div>
     </Card>
   )
+}
+
+CustomProvisions.propTypes = {
+  data: PropTypes.shape({
+    include: PropTypes.bool,
+    items: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string,
+        title: PropTypes.string,
+        content: PropTypes.string,
+      })
+    ),
+  }).isRequired,
+  onChange: PropTypes.func.isRequired,
+  errors: PropTypes.object,
+}
+
+CustomProvisions.defaultProps = {
+  errors: {},
 }

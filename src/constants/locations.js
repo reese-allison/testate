@@ -1,77 +1,10 @@
 /**
  * Location constants for form fields
  * Centralized to avoid duplication across components
+ *
+ * Note: County data is now provided by @nickgraffis/us-counties package
+ * which supports all 50 US states
  */
-
-export const FLORIDA_COUNTIES = [
-  'Alachua',
-  'Baker',
-  'Bay',
-  'Bradford',
-  'Brevard',
-  'Broward',
-  'Calhoun',
-  'Charlotte',
-  'Citrus',
-  'Clay',
-  'Collier',
-  'Columbia',
-  'DeSoto',
-  'Dixie',
-  'Duval',
-  'Escambia',
-  'Flagler',
-  'Franklin',
-  'Gadsden',
-  'Gilchrist',
-  'Glades',
-  'Gulf',
-  'Hamilton',
-  'Hardee',
-  'Hendry',
-  'Hernando',
-  'Highlands',
-  'Hillsborough',
-  'Holmes',
-  'Indian River',
-  'Jackson',
-  'Jefferson',
-  'Lafayette',
-  'Lake',
-  'Lee',
-  'Leon',
-  'Levy',
-  'Liberty',
-  'Madison',
-  'Manatee',
-  'Marion',
-  'Martin',
-  'Miami-Dade',
-  'Monroe',
-  'Nassau',
-  'Okaloosa',
-  'Okeechobee',
-  'Orange',
-  'Osceola',
-  'Palm Beach',
-  'Pasco',
-  'Pinellas',
-  'Polk',
-  'Putnam',
-  'Santa Rosa',
-  'Sarasota',
-  'Seminole',
-  'St. Johns',
-  'St. Lucie',
-  'Sumter',
-  'Suwannee',
-  'Taylor',
-  'Union',
-  'Volusia',
-  'Wakulla',
-  'Walton',
-  'Washington',
-]
 
 export const US_STATES = [
   { value: 'AL', label: 'Alabama' },
@@ -128,6 +61,7 @@ export const US_STATES = [
 ]
 
 export const MARITAL_STATUS_OPTIONS = [
+  { value: '', label: 'Select your marital status...' },
   { value: 'single', label: 'Single (never married)' },
   { value: 'married', label: 'Married' },
   { value: 'divorced', label: 'Divorced' },
@@ -136,6 +70,7 @@ export const MARITAL_STATUS_OPTIONS = [
 ]
 
 export const CHILD_RELATIONSHIP_OPTIONS = [
+  { value: '', label: 'Select relationship...' },
   { value: 'biological', label: 'Biological Child' },
   { value: 'adopted', label: 'Legally Adopted Child' },
   { value: 'stepchild', label: 'Stepchild' },

@@ -1,7 +1,5 @@
 import { useLocalStorage } from './useLocalStorage'
-import { DEFAULT_STATE, getStateConfig, STORAGE_KEYS } from '../constants'
-
-const defaultStateConfig = getStateConfig(DEFAULT_STATE)
+import { STORAGE_KEYS } from '../constants'
 
 const initialState = {
   // Step 1: Testator Info
@@ -9,12 +7,12 @@ const initialState = {
     fullName: '',
     address: '',
     city: '',
-    state: defaultStateConfig.name,
+    state: '',
     zip: '',
     county: '',
-    maritalStatus: 'single',
+    maritalStatus: '',
     spouseName: '',
-    residenceState: DEFAULT_STATE, // State code for will jurisdiction
+    residenceState: '', // State code for will jurisdiction - user must select
   },
 
   // Step 2: Executor/Personal Representative
@@ -56,7 +54,7 @@ const initialState = {
 
   // Step 5: Estate Distribution
   residuaryEstate: {
-    distributionType: 'spouse', // spouse, children, custom
+    distributionType: '', // spouse, children, split, custom - user must select
     spouseShare: 100,
     childrenShare: 0,
     customBeneficiaries: [],

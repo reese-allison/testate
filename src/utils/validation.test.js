@@ -205,13 +205,13 @@ describe('validateStep', () => {
       expect(errors['child_0_name']).toBe('Child 1 name is required')
     })
 
-    it('recommends guardian for minor children', () => {
+    it('requires guardian for minor children', () => {
       const formData = createEmptyFormData()
       formData.children = [{ name: 'Tommy', isMinor: true }]
       formData.guardian = { name: '' }
       const errors = validateStep(2, formData)
 
-      expect(errors['guardian.name']).toBe('A guardian is recommended for minor children')
+      expect(errors['guardian.name']).toBe('A guardian is required when you have minor children')
     })
 
     it('does not require guardian for adult children', () => {

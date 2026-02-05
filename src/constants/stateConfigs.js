@@ -9,8 +9,14 @@
  * - Homestead provisions
  * - Digital assets act (most states adopted RUFADAA)
  * - Simultaneous death act
+ * - UTMA termination age (age at which custodianship ends)
  *
- * Community property states: AZ, CA, ID, LA, NV, NM, TX, WA, WI
+ * Community property states: AZ, CA, ID, NV, NM, TX, WA
+ * Marital property state: WI (distinct from community property)
+ *
+ * Note: Louisiana is excluded as it uses a Civil Law system derived from
+ * French/Spanish law, which differs significantly from common law states.
+ * Louisiana residents should consult a Louisiana-licensed attorney.
  */
 
 export const STATE_CONFIGS = {
@@ -26,6 +32,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Alabama Uniform Fiduciary Access to Digital Assets Act (Ala. Code Section 19-3D-1 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (Ala. Code Section 43-7-1 et seq.)',
+    utmaAge: 21,
   },
   AK: {
     name: 'Alaska',
@@ -38,6 +45,7 @@ export const STATE_CONFIGS = {
     homesteadProvisions: true,
     digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (AS 13.52)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (AS 13.12.702)',
+    utmaAge: 25,
   },
   AZ: {
     name: 'Arizona',
@@ -51,6 +59,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Arizona Revised Uniform Fiduciary Access to Digital Assets Act (A.R.S. Section 14-13001 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (A.R.S. Section 14-2702)',
+    utmaAge: 21,
   },
   AR: {
     name: 'Arkansas',
@@ -64,6 +73,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Arkansas Fiduciary Access to Digital Assets Act (Ark. Code Section 28-77-101 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (Ark. Code Section 28-10-101 et seq.)',
+    utmaAge: 21,
   },
   CA: {
     name: 'California',
@@ -77,6 +87,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (Cal. Prob. Code Section 870-884)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (Cal. Prob. Code Section 220-224)',
+    utmaAge: 21,
   },
   CO: {
     name: 'Colorado',
@@ -90,6 +101,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (C.R.S. Section 15-1-1501 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (C.R.S. Section 15-11-702)',
+    utmaAge: 21,
   },
   CT: {
     name: 'Connecticut',
@@ -103,6 +115,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (C.G.S. Section 45a-334a et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (C.G.S. Section 45a-441)',
+    utmaAge: 21,
   },
   DE: {
     name: 'Delaware',
@@ -116,6 +129,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Delaware Uniform Fiduciary Access to Digital Assets Act (12 Del. C. Section 5001 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (12 Del. C. Section 701 et seq.)',
+    utmaAge: 21,
   },
   FL: {
     name: 'Florida',
@@ -129,6 +143,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct: 'Florida Fiduciary Access to Digital Assets Act (F.S. Chapter 740)',
     simultaneousDeathAct:
       'Uniform Simultaneous Death Act as adopted in Florida (F.S. Section 732.601)',
+    utmaAge: 21,
   },
   GA: {
     name: 'Georgia',
@@ -142,6 +157,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (O.C.G.A. Section 53-13-1 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (O.C.G.A. Section 53-10-1 et seq.)',
+    utmaAge: 21,
   },
   HI: {
     name: 'Hawaii',
@@ -154,6 +170,7 @@ export const STATE_CONFIGS = {
     homesteadProvisions: true,
     digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (HRS Chapter 556A)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (HRS Section 560:2-702)',
+    utmaAge: 21,
   },
   ID: {
     name: 'Idaho',
@@ -167,6 +184,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (Idaho Code Section 15-14-101 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (Idaho Code Section 15-2-702)',
+    utmaAge: 21,
   },
   IL: {
     name: 'Illinois',
@@ -179,6 +197,7 @@ export const STATE_CONFIGS = {
     homesteadProvisions: true,
     digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (760 ILCS 75/)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (755 ILCS 5/3-1)',
+    utmaAge: 21,
   },
   IN: {
     name: 'Indiana',
@@ -191,6 +210,7 @@ export const STATE_CONFIGS = {
     homesteadProvisions: true,
     digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (IC 32-39-1 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (IC 29-1-17)',
+    utmaAge: 21,
   },
   IA: {
     name: 'Iowa',
@@ -204,6 +224,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (Iowa Code Chapter 636C)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (Iowa Code Section 633.523 et seq.)',
+    utmaAge: 21,
   },
   KS: {
     name: 'Kansas',
@@ -217,6 +238,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (K.S.A. 58-4801 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (K.S.A. 58-708 et seq.)',
+    utmaAge: 21,
   },
   KY: {
     name: 'Kentucky',
@@ -229,19 +251,9 @@ export const STATE_CONFIGS = {
     homesteadProvisions: true,
     digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (KRS Chapter 395A)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (KRS 397.010 et seq.)',
+    utmaAge: 18,
   },
-  LA: {
-    name: 'Louisiana',
-    fullName: 'State of Louisiana',
-    witnesses: 2,
-    selfProvingAffidavit: true,
-    affidavitStatute: 'Louisiana Civil Code Article 1577',
-    antiLapseStatute: 'Louisiana Civil Code Article 1593',
-    communityProperty: true,
-    homesteadProvisions: true,
-    digitalAssetsAct: 'Uniform Fiduciary Access to Digital Assets Act (La. R.S. 9:2481 et seq.)',
-    simultaneousDeathAct: 'Uniform Simultaneous Death Act (La. R.S. 9:1521 et seq.)',
-  },
+  // Louisiana is excluded - Civil Law jurisdiction requires Louisiana-licensed attorney
   ME: {
     name: 'Maine',
     fullName: 'State of Maine',
@@ -254,6 +266,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (18-C M.R.S. Section 8-101 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (18-C M.R.S. Section 2-702)',
+    utmaAge: 21,
   },
   MD: {
     name: 'Maryland',
@@ -267,6 +280,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Maryland Fiduciary Access to Digital Assets Act (Md. Est. & Trusts Section 15-601 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (Md. Est. & Trusts Section 3-108)',
+    utmaAge: 21,
   },
   MA: {
     name: 'Massachusetts',
@@ -280,6 +294,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Uniform Fiduciary Access to Digital Assets Act (M.G.L. c. 190B Section 6-501 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (M.G.L. c. 190B Section 2-702)',
+    utmaAge: 21,
   },
   MI: {
     name: 'Michigan',
@@ -292,6 +307,7 @@ export const STATE_CONFIGS = {
     homesteadProvisions: true,
     digitalAssetsAct: 'Fiduciary Access to Digital Assets Act (MCL 700.1051 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (MCL 700.2702)',
+    utmaAge: 21,
   },
   MN: {
     name: 'Minnesota',
@@ -305,6 +321,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (Minn. Stat. Chapter 521A)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (Minn. Stat. Section 524.2-702)',
+    utmaAge: 21,
   },
   MS: {
     name: 'Mississippi',
@@ -318,6 +335,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Mississippi Uniform Fiduciary Access to Digital Assets Act (Miss. Code Section 91-29-1 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (Miss. Code Section 91-3-7)',
+    utmaAge: 21,
   },
   MO: {
     name: 'Missouri',
@@ -331,6 +349,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Missouri Uniform Fiduciary Access to Digital Assets Act (Mo. Rev. Stat. Section 461.800 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (Mo. Rev. Stat. Section 471.010 et seq.)',
+    utmaAge: 21,
   },
   MT: {
     name: 'Montana',
@@ -344,6 +363,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (MCA Title 72 Chapter 34)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (MCA Section 72-2-712)',
+    utmaAge: 21,
   },
   NE: {
     name: 'Nebraska',
@@ -357,6 +377,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Nebraska Uniform Fiduciary Access to Digital Assets Act (Neb. Rev. Stat. Section 30-4001 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (Neb. Rev. Stat. Section 30-2702)',
+    utmaAge: 21,
   },
   NV: {
     name: 'Nevada',
@@ -369,6 +390,7 @@ export const STATE_CONFIGS = {
     homesteadProvisions: true,
     digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (NRS Chapter 143C)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (NRS Chapter 135)',
+    utmaAge: 25,
   },
   NH: {
     name: 'New Hampshire',
@@ -381,6 +403,7 @@ export const STATE_CONFIGS = {
     homesteadProvisions: true,
     digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (RSA Chapter 554-B)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (RSA 563:1 et seq.)',
+    utmaAge: 21,
   },
   NJ: {
     name: 'New Jersey',
@@ -394,6 +417,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (N.J.S.A. 3B:14-61 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (N.J.S.A. 3B:3-32)',
+    utmaAge: 21,
   },
   NM: {
     name: 'New Mexico',
@@ -407,6 +431,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (NMSA 1978 Section 46-9-1 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (NMSA Section 45-2-702)',
+    utmaAge: 21,
   },
   NY: {
     name: 'New York',
@@ -419,6 +444,7 @@ export const STATE_CONFIGS = {
     homesteadProvisions: true,
     digitalAssetsAct: 'New York Fiduciary Access to Digital Assets Law (EPTL Article 13-A)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (EPTL Section 2-1.6)',
+    utmaAge: 21,
   },
   NC: {
     name: 'North Carolina',
@@ -432,6 +458,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (N.C.G.S. Chapter 36F)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (N.C.G.S. Section 28A-24-1 et seq.)',
+    utmaAge: 21,
   },
   ND: {
     name: 'North Dakota',
@@ -445,6 +472,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (NDCC Chapter 30.1-41)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (NDCC Section 30.1-10-02)',
+    utmaAge: 21,
   },
   OH: {
     name: 'Ohio',
@@ -457,6 +485,7 @@ export const STATE_CONFIGS = {
     homesteadProvisions: true,
     digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (ORC Chapter 2137)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (ORC Section 2105.31 et seq.)',
+    utmaAge: 21,
   },
   OK: {
     name: 'Oklahoma',
@@ -470,6 +499,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (58 Okl. St. Section 1101 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (84 Okl. St. Section 231 et seq.)',
+    utmaAge: 21,
   },
   OR: {
     name: 'Oregon',
@@ -482,6 +512,7 @@ export const STATE_CONFIGS = {
     homesteadProvisions: true,
     digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (ORS Chapter 112)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (ORS Section 112.572)',
+    utmaAge: 25,
   },
   PA: {
     name: 'Pennsylvania',
@@ -495,6 +526,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (20 Pa.C.S. Chapter 39)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (20 Pa.C.S. Section 8502)',
+    utmaAge: 21,
   },
   RI: {
     name: 'Rhode Island',
@@ -509,6 +541,7 @@ export const STATE_CONFIGS = {
       'Revised Uniform Fiduciary Access to Digital Assets Act (R.I. Gen. Laws Chapter 33-27)',
     simultaneousDeathAct:
       'Uniform Simultaneous Death Act (R.I. Gen. Laws Section 33-1.1-1 et seq.)',
+    utmaAge: 21,
   },
   SC: {
     name: 'South Carolina',
@@ -522,6 +555,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (S.C. Code Section 62-1-401 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (S.C. Code Section 62-2-702)',
+    utmaAge: 21,
   },
   SD: {
     name: 'South Dakota',
@@ -534,6 +568,7 @@ export const STATE_CONFIGS = {
     homesteadProvisions: true,
     digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (SDCL Chapter 29A-8)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (SDCL Section 29A-2-702)',
+    utmaAge: 18,
   },
   TN: {
     name: 'Tennessee',
@@ -547,6 +582,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (Tenn. Code Section 35-8-201 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (Tenn. Code Section 31-3-102)',
+    utmaAge: 21,
   },
   TX: {
     name: 'Texas',
@@ -560,6 +596,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (Tex. Est. Code Chapter 2001)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (Tex. Est. Code Section 121.052)',
+    utmaAge: 21,
   },
   UT: {
     name: 'Utah',
@@ -573,6 +610,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (Utah Code Chapter 75-9)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (Utah Code Section 75-2-702)',
+    utmaAge: 21,
   },
   VT: {
     name: 'Vermont',
@@ -586,6 +624,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (14 V.S.A. Chapter 125)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (14 V.S.A. Section 322 et seq.)',
+    utmaAge: 21,
   },
   VA: {
     name: 'Virginia',
@@ -599,6 +638,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (Va. Code Section 64.2-109 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (Va. Code Section 64.2-2200 et seq.)',
+    utmaAge: 21,
   },
   WA: {
     name: 'Washington',
@@ -611,6 +651,7 @@ export const STATE_CONFIGS = {
     homesteadProvisions: true,
     digitalAssetsAct: 'Revised Uniform Fiduciary Access to Digital Assets Act (RCW Chapter 11.120)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (RCW Chapter 11.05A)',
+    utmaAge: 21,
   },
   WV: {
     name: 'West Virginia',
@@ -624,6 +665,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (W. Va. Code Chapter 44D)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (W. Va. Code Section 42-5-1 et seq.)',
+    utmaAge: 21,
   },
   WI: {
     name: 'Wisconsin',
@@ -632,11 +674,13 @@ export const STATE_CONFIGS = {
     selfProvingAffidavit: true,
     affidavitStatute: 'Wisconsin Statutes Section 853.04',
     antiLapseStatute: 'Wisconsin Statutes Section 854.06',
-    communityProperty: true, // Marital property state (similar to community property)
+    maritalProperty: true, // Wisconsin is a Marital Property state (distinct from community property)
+    communityProperty: false,
     homesteadProvisions: true,
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (Wis. Stat. Chapter 711)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (Wis. Stat. Section 854.03)',
+    utmaAge: 21,
   },
   WY: {
     name: 'Wyoming',
@@ -650,6 +694,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (Wyo. Stat. Chapter 2-3)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (Wyo. Stat. Section 2-14-101 et seq.)',
+    utmaAge: 21,
   },
   DC: {
     name: 'District of Columbia',
@@ -663,6 +708,7 @@ export const STATE_CONFIGS = {
     digitalAssetsAct:
       'Revised Uniform Fiduciary Access to Digital Assets Act (D.C. Code Section 21-2601.01 et seq.)',
     simultaneousDeathAct: 'Uniform Simultaneous Death Act (D.C. Code Section 19-501 et seq.)',
+    utmaAge: 21,
   },
 }
 
@@ -680,6 +726,13 @@ export function getStateConfig(stateCode) {
  */
 export const COMMUNITY_PROPERTY_STATES = Object.entries(STATE_CONFIGS)
   .filter(([_, config]) => config.communityProperty)
+  .map(([code]) => code)
+
+/**
+ * Get list of marital property states (Wisconsin)
+ */
+export const MARITAL_PROPERTY_STATES = Object.entries(STATE_CONFIGS)
+  .filter(([_, config]) => config.maritalProperty)
   .map(([code]) => code)
 
 /**

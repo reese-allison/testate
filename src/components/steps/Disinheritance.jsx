@@ -1,12 +1,27 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import PropTypes from 'prop-types'
 import { Plus, Trash2, AlertTriangle } from 'lucide-react'
 import { Card, FormField, Alert } from '../ui'
 import { getStateConfig } from '../../constants'
 import { useArrayItemManager } from '../../hooks/useArrayItemManager'
+import { getDisinheritanceWarnings } from '../../utils/validators'
 
-export function Disinheritance({ data, onChange, residenceState = '' }) {
+export function Disinheritance({
+  data,
+  onChange,
+  residenceState = '',
+  testator = {},
+  residuaryEstate = {},
+  specificGifts = [],
+}) {
   const stateConfig = getStateConfig(residenceState)
+
+  // Calculate warnings for spouse disinheritance and beneficiary conflicts
+  const warnings = useMemo(
+    () =>
+      getDisinheritanceWarnings({ disinheritance: data, testator, residuaryEstate, specificGifts }),
+    [data, testator, residuaryEstate, specificGifts]
+  )
 
   const {
     addItem: addPerson,
@@ -126,6 +141,27 @@ export function Disinheritance({ data, onChange, residenceState = '' }) {
                 <Plus className="w-5 h-5" aria-hidden="true" />
                 Add Person to Disinherit
               </button>
+
+              {/* Spouse Disinheritance Warning */}
+              {warnings.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  {warnings.map(w => (
+                    <div
+                      key={w.field}
+                      className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400 p-4 rounded-r"
+                    >
+                      <div className="flex">
+                        <div className="flex-shrink-0">
+                          <AlertTriangle className="h-5 w-5 text-amber-400" aria-hidden="true" />
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm text-amber-700 dark:text-amber-300">{w.message}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -173,8 +209,27 @@ Disinheritance.propTypes = {
   }).isRequired,
   onChange: PropTypes.func.isRequired,
   residenceState: PropTypes.string,
+  testator: PropTypes.shape({
+    maritalStatus: PropTypes.string,
+    spouseName: PropTypes.string,
+  }),
+  residuaryEstate: PropTypes.shape({
+    customBeneficiaries: PropTypes.arrayOf(
+      PropTypes.shape({
+        name: PropTypes.string,
+      })
+    ),
+  }),
+  specificGifts: PropTypes.arrayOf(
+    PropTypes.shape({
+      beneficiary: PropTypes.string,
+    })
+  ),
 }
 
 Disinheritance.defaultProps = {
   residenceState: '',
+  testator: {},
+  residuaryEstate: {},
+  specificGifts: [],
 }

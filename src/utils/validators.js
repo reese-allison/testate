@@ -46,6 +46,9 @@ export function validateTestator(testator) {
   // Residence state is required for will jurisdiction
   if (!isRequired(testator.residenceState)) {
     errors.residenceState = 'State of residence is required'
+  } else if (testator.residenceState === 'LA') {
+    errors.residenceState =
+      'Louisiana uses a Civil Law system that differs significantly from other states. Please consult with a Louisiana attorney for will preparation.'
   }
 
   if (!isRequired(testator.fullName)) {
@@ -129,10 +132,10 @@ export function validateChildren(children, guardian) {
     }
   })
 
-  // If there are minor children, guardian is recommended
+  // If there are minor children, guardian is required
   const hasMinors = children.some(c => c.isMinor)
   if (hasMinors && !isRequired(guardian?.name)) {
-    errors['guardian.name'] = 'A guardian is recommended for minor children'
+    errors['guardian.name'] = 'A guardian is required when you have minor children'
   }
 
   return errors
@@ -341,4 +344,127 @@ export const stepValidators = {
   5: formData => validateAdditionalProvisions(formData),
   6: formData => validateDisinheritance(formData.disinheritance),
   7: formData => validateReview(formData),
+}
+
+/**
+ * Step 2 Extended: Children Warnings
+ * Returns warnings (not errors) for stepchildren
+ */
+export function getChildrenWarnings(formData) {
+  const warnings = []
+  const { children } = formData
+
+  // Warning: Stepchildren included
+  const hasStepchildren = children?.some(c => c.relationship === 'stepchild')
+  if (hasStepchildren) {
+    warnings.push({
+      field: 'stepchildren',
+      message:
+        'Stepchildren do not have automatic inheritance rights unless legally adopted. If you want your stepchildren to inherit, you must explicitly name them as beneficiaries in the estate distribution or specific gifts sections.',
+    })
+  }
+
+  return warnings
+}
+
+/**
+ * Step 4 Extended: Estate Distribution Warnings
+ * Returns warnings (not errors) for conflict situations
+ */
+export function getDistributionWarnings(formData) {
+  const warnings = []
+  const { residuaryEstate, executor } = formData
+
+  // Warning: Executor is primary beneficiary
+  if (residuaryEstate?.distributionType === 'custom') {
+    const executorIsBeneficiary = residuaryEstate.customBeneficiaries?.some(
+      b => b.name?.toLowerCase().trim() === executor?.name?.toLowerCase().trim()
+    )
+    if (executorIsBeneficiary) {
+      warnings.push({
+        field: 'executor_beneficiary',
+        message:
+          'Your Personal Representative is also a primary beneficiary. While this is legally permitted in most states, it may create a potential conflict of interest.',
+      })
+    }
+  }
+
+  return warnings
+}
+
+/**
+ * Step 6 Extended: Disinheritance Warnings
+ * Returns warnings for spouse disinheritance and general guidance
+ */
+export function getDisinheritanceWarnings(formData) {
+  const warnings = []
+  const { disinheritance, testator } = formData
+
+  if (!disinheritance?.include || !disinheritance?.persons?.length) {
+    return warnings
+  }
+
+  // Warning: Spouse disinheritance
+  const disinheritingSpouse =
+    testator?.maritalStatus === 'married' &&
+    disinheritance.persons.some(
+      p =>
+        p.relationship?.toLowerCase().includes('spouse') ||
+        p.name?.toLowerCase().trim() === testator?.spouseName?.toLowerCase().trim()
+    )
+
+  if (disinheritingSpouse) {
+    warnings.push({
+      field: 'spouse_disinheritance',
+      message:
+        'Disinheriting a spouse may be ineffective. Most states grant surviving spouses an "elective share" (typically 30-50% of the estate) that overrides will provisions. The will text will include a disclaimer acknowledging this.',
+    })
+  }
+
+  // General warning about beneficiary conflicts
+  warnings.push({
+    field: 'beneficiary_disinheritance_conflict',
+    message:
+      'Do not list someone as both a beneficiary and a disinherited person. This creates a legal contradiction that would invalidate those provisions.',
+  })
+
+  return warnings
+}
+
+/**
+ * Map of step index to warning function
+ */
+export const stepWarnings = {
+  2: formData => getChildrenWarnings(formData),
+  4: formData => getDistributionWarnings(formData),
+  6: formData => getDisinheritanceWarnings(formData),
+}
+
+/**
+ * Validates that the will text does not contain unresolved placeholders
+ * @param {string} willText - The generated will text to check
+ * @returns {Object} errors object with placeholder field if issues found
+ */
+export function validateNoPlaceholders(willText) {
+  const errors = {}
+  if (!willText || typeof willText !== 'string') {
+    return errors
+  }
+
+  const placeholderPattern = /\[([A-Z_\s]+)\]/g
+  const matches = willText.match(placeholderPattern)
+
+  if (matches && matches.length > 0) {
+    // Filter out intentional placeholders like [NOTARY SEAL]
+    const ignoredPlaceholders = ['NOTARY SEAL']
+    const realPlaceholders = matches.filter(
+      m => !ignoredPlaceholders.includes(m.replace(/[[\]]/g, ''))
+    )
+
+    if (realPlaceholders.length > 0) {
+      const uniquePlaceholders = [...new Set(realPlaceholders)]
+      errors.placeholders = `Your will contains incomplete fields: ${uniquePlaceholders.join(', ')}. Please go back and fill in all required information.`
+    }
+  }
+  return errors
 }

@@ -238,6 +238,8 @@ export function WillGenerator() {
             data={formData.residuaryEstate}
             testator={formData.testator}
             children={formData.children}
+            executor={formData.executor}
+            specificGifts={formData.specificGifts}
             onChange={handleFieldChange}
             errors={errors}
           />
@@ -275,6 +277,9 @@ export function WillGenerator() {
             onChange={handleFieldChange}
             errors={errors}
             residenceState={formData.testator?.residenceState}
+            testator={formData.testator}
+            residuaryEstate={formData.residuaryEstate}
+            specificGifts={formData.specificGifts}
           />
         )
       case 7:

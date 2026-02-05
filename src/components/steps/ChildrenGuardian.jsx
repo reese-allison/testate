@@ -1,11 +1,15 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import PropTypes from 'prop-types'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, AlertTriangle } from 'lucide-react'
 import { Card, FormField, Alert } from '../ui'
 import { US_STATES, CHILD_RELATIONSHIP_OPTIONS } from '../../constants'
 import { useArrayItemManager } from '../../hooks/useArrayItemManager'
+import { getChildrenWarnings } from '../../utils/validators'
 
 export function ChildrenGuardian({ data, guardian, onChange, onArrayChange, errors = {} }) {
+  // Calculate warnings for stepchildren
+  const warnings = useMemo(() => getChildrenWarnings({ children: data }), [data])
+
   const handleGuardianChange = e => {
     const { name, value } = e.target
     onChange('guardian', name, value)
@@ -107,6 +111,27 @@ export function ChildrenGuardian({ data, guardian, onChange, onArrayChange, erro
             <Plus className="w-5 h-5" aria-hidden="true" />
             Add Child
           </button>
+
+          {/* Stepchild Warning */}
+          {warnings.length > 0 && (
+            <div className="mt-4 space-y-2">
+              {warnings.map(w => (
+                <div
+                  key={w.field}
+                  className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400 p-4 rounded-r"
+                >
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <AlertTriangle className="h-5 w-5 text-amber-400" aria-hidden="true" />
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-amber-700 dark:text-amber-300">{w.message}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </Card>
 

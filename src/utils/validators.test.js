@@ -13,6 +13,11 @@ import {
   validateDisinheritance,
   validateReview,
   stepValidators,
+  getChildrenWarnings,
+  getDistributionWarnings,
+  getDisinheritanceWarnings,
+  stepWarnings,
+  validateNoPlaceholders,
 } from './validators'
 
 describe('Validation Helpers', () => {
@@ -123,6 +128,13 @@ describe('validateTestator', () => {
     expect(errors.residenceState).toBeDefined()
   })
 
+  it('returns error for Louisiana (Civil Law jurisdiction)', () => {
+    const errors = validateTestator({ ...validTestator, residenceState: 'LA' })
+    expect(errors.residenceState).toBeDefined()
+    expect(errors.residenceState).toContain('Civil Law system')
+    expect(errors.residenceState).toContain('Louisiana attorney')
+  })
+
   it('accepts valid state codes', () => {
     const errors = validateTestator({ ...validTestator, residenceState: 'CA' })
     expect(errors.residenceState).toBeUndefined()
@@ -219,9 +231,10 @@ describe('validateChildren', () => {
     expect(errors['child_0_name']).toBeDefined()
   })
 
-  it('recommends guardian for minor children', () => {
+  it('requires guardian for minor children', () => {
     const errors = validateChildren([{ name: 'Child', isMinor: true }], { name: '' })
     expect(errors['guardian.name']).toBeDefined()
+    expect(errors['guardian.name']).toContain('required')
   })
 
   it('does not require guardian for adult children', () => {
@@ -540,5 +553,177 @@ describe('stepValidators', () => {
       const result = stepValidators[i](mockFormData)
       expect(typeof result).toBe('object')
     }
+  })
+})
+
+describe('getChildrenWarnings', () => {
+  it('returns warning when stepchildren are present', () => {
+    const warnings = getChildrenWarnings({
+      children: [
+        { name: 'Bio Child', relationship: 'biological' },
+        { name: 'Step Child', relationship: 'stepchild' },
+      ],
+    })
+    expect(warnings.length).toBe(1)
+    expect(warnings[0].field).toBe('stepchildren')
+    expect(warnings[0].message).toContain('automatic inheritance rights')
+  })
+
+  it('returns no warning when no stepchildren', () => {
+    const warnings = getChildrenWarnings({
+      children: [
+        { name: 'Bio Child', relationship: 'biological' },
+        { name: 'Adopted Child', relationship: 'adopted' },
+      ],
+    })
+    expect(warnings.length).toBe(0)
+  })
+
+  it('returns no warning when no children', () => {
+    const warnings = getChildrenWarnings({ children: [] })
+    expect(warnings.length).toBe(0)
+  })
+})
+
+describe('getDistributionWarnings', () => {
+  it('returns warning when executor is a custom beneficiary', () => {
+    const warnings = getDistributionWarnings({
+      residuaryEstate: {
+        distributionType: 'custom',
+        customBeneficiaries: [{ name: 'John Smith', share: 100 }],
+      },
+      executor: { name: 'John Smith' },
+    })
+    expect(warnings.length).toBe(1)
+    expect(warnings[0].field).toBe('executor_beneficiary')
+    expect(warnings[0].message).toContain('conflict of interest')
+  })
+
+  it('returns no warning for normal case', () => {
+    const warnings = getDistributionWarnings({
+      residuaryEstate: { distributionType: 'spouse' },
+      executor: { name: 'Executor' },
+    })
+    expect(warnings.length).toBe(0)
+  })
+})
+
+describe('getDisinheritanceWarnings', () => {
+  it('returns spouse warning when spouse is being disinherited', () => {
+    const warnings = getDisinheritanceWarnings({
+      disinheritance: {
+        include: true,
+        persons: [{ name: 'Jane Smith', relationship: 'Spouse' }],
+      },
+      testator: { maritalStatus: 'married', spouseName: 'Jane Smith' },
+    })
+    const spouseWarning = warnings.find(w => w.field === 'spouse_disinheritance')
+    expect(spouseWarning).toBeDefined()
+    expect(spouseWarning.message).toContain('elective share')
+  })
+
+  it('returns spouse warning when spouse name matches disinherited person', () => {
+    const warnings = getDisinheritanceWarnings({
+      disinheritance: {
+        include: true,
+        persons: [{ name: 'Jane Smith', relationship: 'other' }],
+      },
+      testator: { maritalStatus: 'married', spouseName: 'Jane Smith' },
+    })
+    const spouseWarning = warnings.find(w => w.field === 'spouse_disinheritance')
+    expect(spouseWarning).toBeDefined()
+  })
+
+  it('returns no spouse warning when not married', () => {
+    const warnings = getDisinheritanceWarnings({
+      disinheritance: {
+        include: true,
+        persons: [{ name: 'Someone', relationship: 'Brother' }],
+      },
+      testator: { maritalStatus: 'single' },
+    })
+    const spouseWarning = warnings.find(w => w.field === 'spouse_disinheritance')
+    expect(spouseWarning).toBeUndefined()
+  })
+
+  it('returns no warning when disinheritance not enabled', () => {
+    const warnings = getDisinheritanceWarnings({
+      disinheritance: { include: false },
+      testator: { maritalStatus: 'married', spouseName: 'Jane' },
+    })
+    expect(warnings.length).toBe(0)
+  })
+
+  it('includes general warning about beneficiary conflicts when disinheritance is enabled', () => {
+    const warnings = getDisinheritanceWarnings({
+      disinheritance: {
+        include: true,
+        persons: [{ name: 'John Doe', relationship: 'Son' }],
+      },
+      testator: { maritalStatus: 'single' },
+    })
+    const conflictWarning = warnings.find(w => w.field === 'beneficiary_disinheritance_conflict')
+    expect(conflictWarning).toBeDefined()
+    expect(conflictWarning.message).toContain('Do not list someone as both')
+  })
+})
+
+describe('stepWarnings', () => {
+  it('has warning functions for steps 2, 4, and 6', () => {
+    expect(stepWarnings[2]).toBeDefined()
+    expect(stepWarnings[4]).toBeDefined()
+    expect(stepWarnings[6]).toBeDefined()
+  })
+
+  it('step warning functions are callable', () => {
+    const mockFormData = {
+      children: [],
+      residuaryEstate: { distributionType: 'spouse' },
+      executor: { name: '' },
+      specificGifts: [],
+      disinheritance: { include: false },
+      testator: { maritalStatus: 'single' },
+    }
+
+    expect(Array.isArray(stepWarnings[2](mockFormData))).toBe(true)
+    expect(Array.isArray(stepWarnings[4](mockFormData))).toBe(true)
+    expect(Array.isArray(stepWarnings[6](mockFormData))).toBe(true)
+  })
+})
+
+describe('validateNoPlaceholders', () => {
+  it('returns no errors for clean will text', () => {
+    const willText = 'I, John Smith, being of sound mind...'
+    const errors = validateNoPlaceholders(willText)
+    expect(Object.keys(errors)).toHaveLength(0)
+  })
+
+  it('returns error when placeholders are present', () => {
+    const willText = 'I, [NAME], being of sound mind, residing at [ADDRESS]...'
+    const errors = validateNoPlaceholders(willText)
+    expect(errors.placeholders).toBeDefined()
+    expect(errors.placeholders).toContain('[NAME]')
+    expect(errors.placeholders).toContain('[ADDRESS]')
+  })
+
+  it('ignores NOTARY SEAL placeholder', () => {
+    const willText = 'Signed before me this day. [NOTARY SEAL]'
+    const errors = validateNoPlaceholders(willText)
+    expect(Object.keys(errors)).toHaveLength(0)
+  })
+
+  it('handles null or undefined input', () => {
+    expect(Object.keys(validateNoPlaceholders(null))).toHaveLength(0)
+    expect(Object.keys(validateNoPlaceholders(undefined))).toHaveLength(0)
+    expect(Object.keys(validateNoPlaceholders(''))).toHaveLength(0)
+  })
+
+  it('deduplicates repeated placeholders', () => {
+    const willText = 'I, [NAME], residing at [ADDRESS]. My name is [NAME].'
+    const errors = validateNoPlaceholders(willText)
+    expect(errors.placeholders).toBeDefined()
+    // Should only show [NAME] once, not twice
+    const matches = errors.placeholders.match(/\[NAME\]/g)
+    expect(matches).toHaveLength(1)
   })
 })

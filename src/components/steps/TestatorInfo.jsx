@@ -13,7 +13,7 @@ export function TestatorInfo({ data, onChange, errors = {} }) {
     // and clear county since it won't apply to the new state
     if (name === 'residenceState') {
       const stateConfig = getStateConfig(value)
-      onChange('testator', 'state', stateConfig.name)
+      onChange('testator', 'state', stateConfig?.name || '')
       onChange('testator', 'county', '')
     }
   }
@@ -23,8 +23,10 @@ export function TestatorInfo({ data, onChange, errors = {} }) {
   const isLouisiana = stateCode === 'LA'
 
   // Get counties for the selected state (memoized to avoid recalculating on every render)
+  // Note: getCountyByState requires full state name (e.g., "Texas"), not abbreviation (e.g., "TX")
   const countyOptions = useMemo(() => {
-    const counties = getCountyByState(stateCode) || []
+    const stateName = selectedStateConfig?.name || ''
+    const counties = getCountyByState(stateName) || []
     const label = isLouisiana ? 'Select your parish...' : 'Select your county...'
     return [
       { value: '', label },
@@ -32,7 +34,7 @@ export function TestatorInfo({ data, onChange, errors = {} }) {
         .map(c => ({ value: c.name, label: c.name }))
         .sort((a, b) => a.label.localeCompare(b.label)),
     ]
-  }, [stateCode, isLouisiana])
+  }, [selectedStateConfig?.name, isLouisiana])
 
   return (
     <div className="space-y-6">
@@ -50,16 +52,31 @@ export function TestatorInfo({ data, onChange, errors = {} }) {
           error={errors.residenceState}
           options={[
             { value: '', label: 'Select your state...' },
-            ...US_STATES.map(s => ({ value: s.value, label: s.label })),
+            ...US_STATES.filter(s => s.value !== 'LA').map(s => ({
+              value: s.value,
+              label: s.label,
+            })),
           ]}
           tooltip="Select the state where you currently legally reside. This determines which state's laws will govern your will."
         />
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          Louisiana residents: This tool cannot generate wills for Louisiana due to its unique Civil
+          Law system. Please consult a Louisiana-licensed attorney.
+        </p>
 
         {selectedStateConfig?.communityProperty && (
           <Alert variant="info" title="Community Property State" className="mt-4">
             {selectedStateConfig.name} is a community property state. Property acquired during
             marriage is generally considered jointly owned by both spouses. This may affect how you
             can distribute certain assets in your will.
+          </Alert>
+        )}
+
+        {selectedStateConfig?.maritalProperty && (
+          <Alert variant="info" title="Marital Property State" className="mt-4">
+            {selectedStateConfig.name} is a marital property state. Property acquired during
+            marriage may be subject to marital property laws, which may affect how you can
+            distribute certain assets in your will.
           </Alert>
         )}
 

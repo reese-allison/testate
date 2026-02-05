@@ -95,7 +95,7 @@ describe('generateWillText', () => {
       formData.testator.maritalStatus = 'widowed'
       const text = generateWillText(formData)
 
-      expect(text).toContain('I am a widow/widower and currently unmarried')
+      expect(text).toContain('I am widowed and currently unmarried')
     })
 
     it('declares no children when empty', () => {
@@ -117,6 +117,20 @@ describe('generateWillText', () => {
       expect(text).toContain('Emily Rose Smith')
       expect(text).toContain('Michael John Smith (legally adopted)')
     })
+
+    it('lists stepchildren with stepchild label but no disclaimer', () => {
+      const formData = createMinimalFormData()
+      formData.children = [
+        { name: 'John Smith Jr', relationship: 'biological', isMinor: false },
+        { name: 'Sarah Williams', relationship: 'stepchild', isMinor: true },
+      ]
+      const text = generateWillText(formData)
+
+      expect(text).toContain('Sarah Williams (stepchild)')
+      expect(text).not.toContain(
+        'stepchildren listed above do not have automatic inheritance rights'
+      )
+    })
   })
 
   describe('Personal Representative', () => {
@@ -137,12 +151,13 @@ describe('generateWillText', () => {
       expect(text).toContain('Robert Wilson, my Brother, as alternate Personal Representative')
     })
 
-    it('specifies no bond when bondRequired is false', () => {
+    it('specifies no bond with legal qualifier when bondRequired is false', () => {
       const formData = createMinimalFormData()
       formData.executor.bondRequired = false
       const text = generateWillText(formData)
 
-      expect(text).toContain('No bond or surety or other security shall be required')
+      expect(text).toContain('To the extent permitted by law')
+      expect(text).toContain('no bond or other security be required')
     })
 
     it('specifies bond required when bondRequired is true', () => {
@@ -157,9 +172,9 @@ describe('generateWillText', () => {
       const formData = createMinimalFormData()
       const text = generateWillText(formData)
 
-      expect(text).toContain('Take possession of, manage, and control all property')
-      expect(text).toContain('Retain, sell at public or private sale')
-      expect(text).toContain('Pay all debts, taxes, and expenses of administration')
+      expect(text).toContain('Take possession of, manage, and control all estate property')
+      expect(text).toContain('Sell, exchange, or invest estate property')
+      expect(text).toContain('Pay debts, taxes, and administration expenses')
     })
   })
 
@@ -172,6 +187,18 @@ describe('generateWillText', () => {
 
       expect(text).toContain('GUARDIAN OF MINOR CHILDREN')
       expect(text).toContain('I appoint Mary Johnson, Aunt, as guardian')
+    })
+
+    it('includes improved guardian language covering all scenarios', () => {
+      const formData = createMinimalFormData()
+      formData.children = [{ name: 'Child', isMinor: true }]
+      formData.guardian = { name: 'Mary Johnson', relationship: 'Aunt' }
+      const text = generateWillText(formData)
+
+      expect(text).toContain('surviving parent is deceased')
+      expect(text).toContain('legally incapacitated')
+      expect(text).toContain('parental rights terminated')
+      expect(text).toContain('otherwise unable or unwilling')
     })
 
     it('does not include guardian section when no minor children', () => {
@@ -351,7 +378,7 @@ describe('generateWillText', () => {
       formData.residuaryEstate.distributionType = 'spouse'
       const text = generateWillText(formData)
 
-      expect(text).toContain('To my spouse, Jane Smith, if my spouse survives me by thirty days')
+      expect(text).toContain('To my spouse, Jane Smith.')
     })
 
     it('distributes to children equally', () => {
@@ -412,7 +439,7 @@ describe('generateWillText', () => {
       formData.survivorshipPeriod = 30
       const text = generateWillText(formData)
 
-      expect(text).toContain('survives me by thirty days')
+      expect(text).toContain('survive me by thirty days')
     })
 
     it('uses custom survivorship period', () => {
@@ -420,7 +447,7 @@ describe('generateWillText', () => {
       formData.survivorshipPeriod = 60
       const text = generateWillText(formData)
 
-      expect(text).toContain('survives me by sixty days')
+      expect(text).toContain('survive me by sixty days')
     })
   })
 
@@ -450,6 +477,21 @@ describe('generateWillText', () => {
       expect(text).toContain('Social media accounts: Delete')
       expect(text).toContain('Email accounts: Archive contents then delete')
       expect(text).toContain('Cloud storage: Transfer to fiduciary')
+    })
+
+    it('includes digital fiduciary subordination clause when fiduciary is named', () => {
+      const formData = createMinimalFormData()
+      formData.digitalAssets = {
+        include: true,
+        fiduciary: 'Robert Wilson',
+        socialMedia: 'delete',
+      }
+      const text = generateWillText(formData)
+
+      expect(text).toContain('under the general supervision of my Personal Representative')
+      expect(text).toContain(
+        'coordinate with my Personal Representative regarding any digital assets of financial value'
+      )
     })
   })
 
@@ -484,6 +526,24 @@ describe('generateWillText', () => {
       expect(text).toContain('Bob Smith as alternate')
       expect(text).toContain('$5,000 for the care of this pet')
       expect(text).toContain('Likes long walks')
+    })
+
+    it('includes pet care disclaimer', () => {
+      const formData = createMinimalFormData()
+      formData.pets = {
+        include: true,
+        items: [
+          {
+            type: 'Cat',
+            name: 'Whiskers',
+            caretaker: 'John Doe',
+          },
+        ],
+      }
+      const text = generateWillText(formData)
+
+      expect(text).toContain('expressions of my wishes')
+      expect(text).toContain('designated caretaker is not legally obligated')
     })
   })
 
@@ -540,6 +600,42 @@ describe('generateWillText', () => {
       expect(text).toContain('John Doe Jr (Son) shall receive no benefit')
       expect(text).toContain('Reason: Personal reasons')
       expect(text).toContain('This omission is intentional')
+    })
+
+    it('includes spousal disinheritance disclaimer when spouse is disinherited', () => {
+      const formData = createMinimalFormData()
+      formData.testator.maritalStatus = 'married'
+      formData.testator.spouseName = 'Jane Smith'
+      formData.disinheritance = {
+        include: true,
+        persons: [
+          {
+            name: 'Jane Smith',
+            relationship: 'Spouse',
+          },
+        ],
+      }
+      const text = generateWillText(formData)
+
+      expect(text).toContain('elective share of the estate')
+      expect(text).toContain('statutory rights of my surviving spouse')
+    })
+
+    it('does not include spousal disclaimer when disinheriting non-spouse', () => {
+      const formData = createMinimalFormData()
+      formData.testator.maritalStatus = 'single'
+      formData.disinheritance = {
+        include: true,
+        persons: [
+          {
+            name: 'Sibling',
+            relationship: 'Brother',
+          },
+        ],
+      }
+      const text = generateWillText(formData)
+
+      expect(text).not.toContain('elective share')
     })
   })
 
@@ -630,7 +726,16 @@ describe('generateWillText', () => {
       const text = generateWillText(formData)
 
       expect(text).toContain('NO CONTEST CLAUSE')
-      expect(text).toContain('If any beneficiary under this Will, directly or indirectly, contests')
+      expect(text).toContain('If any beneficiary contests this Will')
+    })
+
+    it('includes enforceability disclaimer in no contest clause', () => {
+      const formData = createMinimalFormData()
+      formData.noContestClause = true
+      const text = generateWillText(formData)
+
+      expect(text).toContain('No-contest clause enforceability varies by state')
+      expect(text).toContain('enforced to the fullest extent permitted by law')
     })
 
     it('does not include no contest clause when disabled', () => {
@@ -662,7 +767,7 @@ describe('generateWillText', () => {
 
       expect(text).toContain('SIMULTANEOUS DEATH')
       expect(text).toContain('Uniform Simultaneous Death Act')
-      expect(text).toContain('conclusively presumed')
+      expect(text).toContain('treated as having predeceased me')
     })
   })
 
@@ -673,7 +778,7 @@ describe('generateWillText', () => {
 
       expect(text).toContain('TAX APPORTIONMENT')
       expect(text).toContain('death taxes')
-      expect(text).toContain('without apportionment')
+      expect(text).toContain('administration expense')
     })
   })
 
@@ -704,7 +809,7 @@ describe('generateWillText', () => {
       const text = generateWillText(formData)
 
       expect(text).toContain('Gender and Number')
-      expect(text).toContain('masculine, feminine, or neuter')
+      expect(text).toContain('Words of any gender or number include all genders and numbers')
     })
 
     it('includes definitions clause', () => {
@@ -722,6 +827,29 @@ describe('generateWillText', () => {
 
       expect(text).toContain('Florida Homestead')
       expect(text).toContain('special protections')
+    })
+
+    it('includes Wisconsin marital property notice', () => {
+      const formData = createMinimalFormData('WI')
+      formData.testator.state = 'Wisconsin'
+      const text = generateWillText(formData)
+
+      expect(text).toContain('Marital Property')
+      expect(text).toContain('marital property state')
+      expect(text).not.toContain('community property state')
+    })
+  })
+
+  describe('End of Document Disclaimer', () => {
+    it('includes IMPORTANT NOTICE disclaimer at end of generated will', () => {
+      const formData = createMinimalFormData()
+      const text = generateWillText(formData)
+
+      expect(text).toContain('IMPORTANT NOTICE')
+      expect(text).toContain('online template service')
+      expect(text).toContain('informational purposes only')
+      expect(text).toContain('does not constitute legal advice')
+      expect(text).toContain('licensed attorney in your state of residence')
     })
   })
 
@@ -776,15 +904,8 @@ describe('generateWillText', () => {
       expect(text).toContain("Texas's anti-lapse statute")
     })
 
-    it('uses Parish instead of County for Louisiana', () => {
-      const formData = createMinimalFormData('LA')
-      formData.testator.state = 'Louisiana'
-      formData.testator.county = 'Orleans'
-      const text = generateWillText(formData)
-
-      expect(text).toContain('a resident of Orleans Parish, Louisiana')
-      expect(text).toContain('PARISH OF ORLEANS')
-    })
+    // Louisiana has been removed from supported states (Civil Law jurisdiction)
+    // The 'Parish' terminology is no longer applicable since LA is excluded
 
     it('includes community property notice for community property states', () => {
       const formData = createMinimalFormData('CA')

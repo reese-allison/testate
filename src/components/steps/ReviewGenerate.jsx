@@ -4,6 +4,7 @@ import { Download, RotateCcw, AlertCircle } from 'lucide-react'
 import { Card, Alert } from '../ui'
 import { generateWillText } from '../../utils/willTextGenerator'
 import { validateFullForm } from '../../utils/validation'
+import { validateNoPlaceholders } from '../../utils/validators'
 import { getStateConfig, DEFAULT_STATE } from '../../constants'
 
 function Section({ title, children, show = true }) {
@@ -22,12 +23,16 @@ export function ReviewGenerate({ formData, onReset }) {
   const [error, setError] = useState(null)
   const [showThankYou, setShowThankYou] = useState(false)
 
-  // Memoize validation errors
-  const validationErrors = useMemo(() => validateFullForm(formData), [formData])
-  const hasErrors = Object.keys(validationErrors).length > 0
-
   // Memoize will text generation
   const willText = useMemo(() => generateWillText(formData), [formData])
+
+  // Memoize validation errors (including placeholder validation)
+  const validationErrors = useMemo(() => {
+    const formErrors = validateFullForm(formData)
+    const placeholderErrors = validateNoPlaceholders(willText)
+    return { ...formErrors, ...placeholderErrors }
+  }, [formData, willText])
+  const hasErrors = Object.keys(validationErrors).length > 0
 
   // Lazy load PDF generation for bundle optimization
   const handleGeneratePDF = useCallback(async () => {
@@ -85,9 +90,26 @@ export function ReviewGenerate({ formData, onReset }) {
 
       <Alert variant="warning" title="Review Carefully Before Generating">
         Please review all information below. Once generated, you'll need to print, sign, and have
-        the will properly witnessed according to {stateConfig.name} law ({stateConfig.witnesses}{' '}
-        witnesses and a notary for the self-proving affidavit).
+        the will properly witnessed according to {stateConfig?.name || 'your state'} law (
+        {stateConfig?.witnesses || 2} witnesses and a notary for the self-proving affidavit).
       </Alert>
+
+      {/* Terms of Service Disclaimer Box */}
+      <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+          Important Disclaimer
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          This template is for informational purposes only and does not constitute legal advice. No
+          attorney-client relationship is created by using this service. We strongly recommend
+          having your will reviewed by a licensed attorney in your state before signing. By
+          generating this document, you acknowledge our{' '}
+          <a href="#/terms" className="text-blue-600 dark:text-blue-400 hover:underline">
+            Terms of Service
+          </a>
+          .
+        </p>
+      </div>
 
       {/* Summary Cards */}
       <Card title="Testator Information">
@@ -280,21 +302,118 @@ export function ReviewGenerate({ formData, onReset }) {
       )}
 
       {showThankYou && (
-        <Alert variant="success" title="Download Complete">
-          <p>Your will document has been downloaded successfully.</p>
-          <p className="mt-2 text-sm">
-            If this tool was helpful, consider{' '}
-            <a
-              href="https://ko-fi.com/reeseallison"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
-            >
-              supporting the project
-            </a>{' '}
-            to help keep it free and maintained.
-          </p>
-        </Alert>
+        <>
+          <Alert variant="success" title="Download Complete">
+            <p>Your will document has been downloaded successfully.</p>
+            <p className="mt-2 text-sm">
+              If this tool was helpful, consider{' '}
+              <a
+                href="https://ko-fi.com/reeseallison"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+              >
+                supporting the project
+              </a>{' '}
+              to help keep it free and maintained.
+            </p>
+          </Alert>
+
+          {/* Comprehensive Will Instructions */}
+          <Card title="After You Download: Important Instructions">
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                  Execution Requirements
+                </h4>
+                <ul className="list-disc list-inside space-y-1 text-sm text-gray-600 dark:text-gray-300">
+                  <li>
+                    Sign the will in the presence of all {stateConfig?.witnesses || 2} witnesses
+                  </li>
+                  <li>
+                    All witnesses must sign in your presence and in the presence of each other
+                  </li>
+                  <li>Everyone must sign at the same time during the same signing ceremony</li>
+                  <li>Use blue or black ink for all signatures</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                  Witness Eligibility
+                </h4>
+                <ul className="list-disc list-inside space-y-1 text-sm text-gray-600 dark:text-gray-300">
+                  <li>Must be at least 18 years old</li>
+                  <li>Must be of sound mind and mentally competent</li>
+                  <li>Cannot be a beneficiary named in the will</li>
+                  <li>Cannot be married to a beneficiary</li>
+                  <li>
+                    Should not be the executor (though allowed in most states, it&apos;s best
+                    practice to avoid)
+                  </li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                  Notarization (Self-Proving Affidavit)
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Your will includes a self-proving affidavit. To make it effective, you and your
+                  witnesses must sign the affidavit before a notary public. This allows the will to
+                  be accepted by probate court without requiring witnesses to testify later.
+                </p>
+              </div>
+
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                <h4 className="font-medium text-red-800 dark:text-red-200 mb-2">
+                  Do Not Modify After Signing
+                </h4>
+                <p className="text-sm text-red-700 dark:text-red-300">
+                  Never cross out, write on, or otherwise modify the document after signing. Any
+                  handwritten changes, strikethroughs, or additions may invalidate the entire will
+                  or create ambiguity. If you need to make changes, you must either create a new
+                  will or execute a formal codicil.
+                </p>
+              </div>
+
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                <h4 className="font-medium text-amber-800 dark:text-amber-200 mb-2">
+                  Marriage May Revoke Your Will
+                </h4>
+                <p className="text-sm text-amber-700 dark:text-amber-300">
+                  In most states, getting married after signing your will may automatically revoke
+                  it or significantly affect its provisions. If you marry after signing this will,
+                  you should create a new will to ensure your wishes are properly documented.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Storage Guidance</h4>
+                <ul className="list-disc list-inside space-y-1 text-sm text-gray-600 dark:text-gray-300">
+                  <li>Store the original signed will in a secure, fireproof location</li>
+                  <li>Consider a safe deposit box, home safe, or filing with the probate court</li>
+                  <li>Inform your executor of the will&apos;s location</li>
+                  <li>Keep copies for reference, but only the original is valid</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                  When to Update Your Will
+                </h4>
+                <ul className="list-disc list-inside space-y-1 text-sm text-gray-600 dark:text-gray-300">
+                  <li>Marriage, divorce, or separation</li>
+                  <li>Birth or adoption of children</li>
+                  <li>Death of a beneficiary or executor</li>
+                  <li>Significant changes in your assets or financial situation</li>
+                  <li>Moving to a different state (state laws vary)</li>
+                  <li>Changes in your wishes or relationships</li>
+                </ul>
+              </div>
+            </div>
+          </Card>
+        </>
       )}
 
       {/* Legal Disclaimer */}
@@ -304,16 +423,16 @@ export function ReviewGenerate({ formData, onReset }) {
             <strong>This is a template tool, not legal advice.</strong> The generated document is
             provided for informational purposes only.
           </p>
-          <p>To make this will legally valid in {stateConfig.name}, you must:</p>
+          <p>To make this will legally valid in {stateConfig?.name || 'your state'}, you must:</p>
           <ul className="list-disc list-inside space-y-1">
             <li>Be at least 18 years old and of sound mind</li>
-            <li>Sign the will in the presence of {stateConfig.witnesses} witnesses</li>
+            <li>Sign the will in the presence of {stateConfig?.witnesses || 2} witnesses</li>
             <li>Have all witnesses sign in your presence and each other's presence</li>
             <li>For the self-proving affidavit: sign before a notary public with witnesses</li>
           </ul>
           <p className="font-medium mt-3">
             For complex estates, blended families, or business interests, consult a licensed
-            attorney in {stateConfig.name}.
+            attorney in {stateConfig?.name || 'your state'}.
           </p>
         </div>
       </Alert>

@@ -1,9 +1,22 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import PropTypes from 'prop-types'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, AlertTriangle } from 'lucide-react'
 import { Card, FormField, Alert } from '../ui'
+import { getDistributionWarnings } from '../../utils/validators'
 
-export function EstateDistribution({ data, testator, children, onChange }) {
+export function EstateDistribution({
+  data,
+  testator,
+  children,
+  executor,
+  specificGifts,
+  onChange,
+}) {
+  // Calculate warnings for executor-as-beneficiary and multiple gifts
+  const warnings = useMemo(
+    () => getDistributionWarnings({ residuaryEstate: data, executor, specificGifts }),
+    [data, executor, specificGifts]
+  )
   const isMarried = testator.maritalStatus === 'married'
   const hasChildren = children.length > 0
 
@@ -249,6 +262,27 @@ export function EstateDistribution({ data, testator, children, onChange }) {
         </Card>
       )}
 
+      {/* Distribution Warnings */}
+      {warnings.length > 0 && (
+        <div className="space-y-2">
+          {warnings.map(w => (
+            <div
+              key={w.field}
+              className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400 p-4 rounded-r"
+            >
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <AlertTriangle className="h-5 w-5 text-amber-400" aria-hidden="true" />
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-amber-700 dark:text-amber-300">{w.message}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       <Alert variant="info" title="What is the Residuary Estate?">
         <p className="mt-1">The residuary estate is everything you own that:</p>
         <ul className="list-disc list-inside space-y-1 mt-2">
@@ -282,5 +316,14 @@ EstateDistribution.propTypes = {
     spouseName: PropTypes.string,
   }).isRequired,
   children: PropTypes.array.isRequired,
+  executor: PropTypes.shape({
+    name: PropTypes.string,
+  }),
+  specificGifts: PropTypes.array,
   onChange: PropTypes.func.isRequired,
+}
+
+EstateDistribution.defaultProps = {
+  executor: {},
+  specificGifts: [],
 }

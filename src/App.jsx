@@ -5,6 +5,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import KofiWidget from './components/KofiWidget'
 import PrivacyPolicy from './components/PrivacyPolicy'
 import Disclaimer from './components/Disclaimer'
+import TermsOfService from './components/TermsOfService'
 import { STORAGE_KEYS } from './constants'
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
     const hash = window.location.hash
     if (hash === '#/privacy') return 'privacy'
     if (hash === '#/disclaimer') return 'disclaimer'
+    if (hash === '#/terms') return 'terms'
     return 'home'
   })
 
@@ -25,6 +27,7 @@ function App() {
       const hash = window.location.hash
       if (hash === '#/privacy') setCurrentPage('privacy')
       else if (hash === '#/disclaimer') setCurrentPage('disclaimer')
+      else if (hash === '#/terms') setCurrentPage('terms')
       else setCurrentPage('home')
     }
 
@@ -92,6 +95,7 @@ function App() {
       <main id="main-content" className="max-w-4xl mx-auto px-4 py-8" tabIndex={-1}>
         {currentPage === 'privacy' && <PrivacyPolicy onBack={navigateHome} />}
         {currentPage === 'disclaimer' && <Disclaimer onBack={navigateHome} />}
+        {currentPage === 'terms' && <TermsOfService onBack={navigateHome} />}
         {currentPage === 'home' && (
           <ErrorBoundary
             fallbackMessage="An error occurred while generating your will. Your progress has been saved. Please try again."
@@ -108,6 +112,10 @@ function App() {
         <p className="mt-3 space-x-4">
           <a href="#/disclaimer" className="text-blue-600 dark:text-blue-400 hover:underline">
             Disclaimer
+          </a>
+          <span aria-hidden="true">|</span>
+          <a href="#/terms" className="text-blue-600 dark:text-blue-400 hover:underline">
+            Terms of Service
           </a>
           <span aria-hidden="true">|</span>
           <a href="#/privacy" className="text-blue-600 dark:text-blue-400 hover:underline">

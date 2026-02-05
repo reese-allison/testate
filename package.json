@@ -1,7 +1,7 @@
 {
   "name": "testate",
   "version": "1.0.0",
-  "description": "Florida Last Will and Testament Generator",
+  "description": "Free will generator for all 50 US states",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,26 +11,41 @@
     "deploy": "gh-pages -d dist",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "dead-code": "knip",
+    "format": "prettier --write \"src/**/*.{js,jsx,css}\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,css}\""
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
     "@react-pdf/renderer": "^3.1.0",
+    "file-saver": "^2.0.5",
     "lucide-react": "^0.294.0",
-    "file-saver": "^2.0.5"
+    "prop-types": "^15.8.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "vite": "^5.0.0",
-    "@vitejs/plugin-react": "^4.2.0",
-    "gh-pages": "^6.1.0",
-    "tailwindcss": "^3.4.0",
-    "postcss": "^8.4.32",
-    "autoprefixer": "^10.4.16",
-    "vitest": "^1.2.0",
-    "@testing-library/react": "^14.1.0",
+    "@eslint/js": "^9.39.2",
     "@testing-library/jest-dom": "^6.2.0",
-    "jsdom": "^23.2.0"
+    "@testing-library/react": "^14.1.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-unused-imports": "^4.3.0",
+    "gh-pages": "^6.1.0",
+    "jsdom": "^23.2.0",
+    "knip": "^5.83.0",
+    "postcss": "^8.4.32",
+    "prettier": "^3.8.1",
+    "tailwindcss": "^3.4.0",
+    "vite": "^5.0.0",
+    "vitest": "^1.2.0"
   },
   "homepage": "https://willful.estate"
 }

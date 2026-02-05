@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react'
-import { ChevronLeft, ChevronRight, Save, AlertCircle } from 'lucide-react'
-import { ProgressStepper, Alert } from './ui'
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import { ChevronLeft, ChevronRight, Save } from 'lucide-react'
+import { ProgressStepper, Alert, ConfirmDialog } from './ui'
 import {
   TestatorInfo,
   ExecutorInfo,
@@ -10,11 +10,10 @@ import {
   AdditionalProvisions,
   CustomProvisions,
   Disinheritance,
-  ReviewGenerate
+  ReviewGenerate,
 } from './steps'
 import { useWillState } from '../hooks/useWillState'
 import { validateStep } from '../utils/validation'
-import { getStateConfig } from '../constants'
 
 const STEPS = [
   { label: 'Your Information', shortLabel: 'You', component: 'testator' },
@@ -24,68 +23,85 @@ const STEPS = [
   { label: 'Estate Distribution', shortLabel: 'Estate', component: 'estate' },
   { label: 'Additional Provisions', shortLabel: 'More', component: 'additional' },
   { label: 'Disinheritance', shortLabel: 'Disinherit', component: 'disinherit' },
-  { label: 'Review & Generate', shortLabel: 'Review', component: 'review' }
+  { label: 'Review & Generate', shortLabel: 'Review', component: 'review' },
 ]
 
 export function WillGenerator() {
   const [currentStep, setCurrentStep] = useState(0)
   const [errors, setErrors] = useState({})
-  const [showSaveNotice, setShowSaveNotice] = useState(false)
-  const {
-    formData,
-    updateField,
-    updateSection,
-    updateArray,
-    resetForm
-  } = useWillState()
+  const { formData, updateField, updateArray, resetForm } = useWillState()
 
-  // Get state configuration for current residence state
-  const stateConfig = getStateConfig(formData.testator?.residenceState || 'FL')
+  // Confirmation dialog state
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    variant: 'default',
+    confirmLabel: 'Confirm',
+    cancelLabel: 'Cancel',
+    onConfirm: () => {},
+  })
 
-  // Calculate validation status for all steps (for progress indicator)
+  const closeConfirmDialog = useCallback(() => {
+    setConfirmDialog(prev => ({ ...prev, isOpen: false }))
+  }, [])
+
+  // Ref for error alert - focus when errors appear for accessibility
+  const errorAlertRef = useRef(null)
+  // Ref for step heading - focus after navigation for accessibility
+  const stepHeadingRef = useRef(null)
+
+  // Focus error alert when errors change (for screen reader accessibility)
+  // But only if dialog is not open (dialog has its own focus management)
+  useEffect(() => {
+    if (Object.keys(errors).length > 0 && errorAlertRef.current && !confirmDialog.isOpen) {
+      errorAlertRef.current.focus()
+    }
+  }, [errors, confirmDialog.isOpen])
+
+  // Calculate validation status for all visited steps
   const stepValidationStatus = useMemo(() => {
     return STEPS.map((_, index) => {
+      if (index > currentStep) {
+        return true // Assume valid until visited
+      }
       const stepErrors = validateStep(index, formData)
       return Object.keys(stepErrors).length === 0
     })
-  }, [formData])
+  }, [formData, currentStep])
 
   // Clear specific error when field value changes
-  const clearFieldError = (fieldName) => {
-    if (errors[fieldName]) {
-      setErrors(prev => {
+  const clearFieldError = useCallback(fieldName => {
+    setErrors(prev => {
+      if (prev[fieldName]) {
         const newErrors = { ...prev }
         delete newErrors[fieldName]
         return newErrors
-      })
-    }
-  }
+      }
+      return prev
+    })
+  }, [])
 
   // Wrapper for updateField that clears errors on change
-  const handleFieldChange = (section, field, value) => {
-    updateField(section, field, value)
-    clearFieldError(field)
-  }
+  const handleFieldChange = useCallback(
+    (section, field, value) => {
+      updateField(section, field, value)
+      clearFieldError(field)
+    },
+    [updateField, clearFieldError]
+  )
 
-  // Wrapper for updateArray that clears related errors on change
-  const handleArrayChange = (section, newArray) => {
-    updateArray(section, newArray)
-    // Clear any array-related errors (e.g., child_0_name, gift_1_description)
-    setErrors(prev => {
-      const newErrors = { ...prev }
-      Object.keys(newErrors).forEach(key => {
-        if (key.startsWith('child_') || key.startsWith('gift_') ||
-            key.startsWith('pet_') || key.startsWith('disinherit_') ||
-            key.startsWith('custom_') || key.startsWith('customProvision_') ||
-            key === 'customBeneficiaries' || key === 'distribution') {
-          delete newErrors[key]
-        }
-      })
-      return newErrors
-    })
-  }
+  // Wrapper for updateArray that clears errors on change
+  const handleArrayChange = useCallback(
+    (section, newArray) => {
+      updateArray(section, newArray)
+      // Clear errors when array data changes
+      setErrors({})
+    },
+    [updateArray]
+  )
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     const stepErrors = validateStep(currentStep, formData)
     if (Object.keys(stepErrors).length > 0) {
       setErrors(stepErrors)
@@ -93,84 +109,99 @@ export function WillGenerator() {
     }
     setErrors({})
     if (currentStep < STEPS.length - 1) {
-      setCurrentStep(currentStep + 1)
+      setCurrentStep(prev => prev + 1)
       window.scrollTo(0, 0)
+      // Focus the step heading after navigation for screen readers
+      setTimeout(() => stepHeadingRef.current?.focus(), 0)
     }
-  }
+  }, [currentStep, formData])
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     if (currentStep > 0) {
       setErrors({})
-      setCurrentStep(currentStep - 1)
+      setCurrentStep(prev => prev - 1)
       window.scrollTo(0, 0)
+      // Focus the step heading after navigation for screen readers
+      setTimeout(() => stepHeadingRef.current?.focus(), 0)
     }
-  }
+  }, [currentStep])
 
-  const handleStepClick = (stepIndex) => {
-    // Don't do anything if clicking the current step
-    if (stepIndex === currentStep) {
-      return
-    }
+  const handleStepClick = useCallback(
+    stepIndex => {
+      // Don't do anything if clicking the current step
+      if (stepIndex === currentStep) {
+        return
+      }
 
-    // Going backwards - always allowed, clear errors
-    if (stepIndex < currentStep) {
+      // Going backwards - always allowed, clear errors
+      if (stepIndex < currentStep) {
+        setErrors({})
+        setCurrentStep(stepIndex)
+        window.scrollTo(0, 0)
+        setTimeout(() => stepHeadingRef.current?.focus(), 0)
+        return
+      }
+
+      // Going forwards - validate current step but allow navigation anyway
+      const stepErrors = validateStep(currentStep, formData)
+      if (Object.keys(stepErrors).length > 0) {
+        // Show errors but still allow navigation (user's choice)
+        setErrors(stepErrors)
+        // Use confirm dialog to let user decide
+        setConfirmDialog({
+          isOpen: true,
+          title: 'Continue with Errors?',
+          message:
+            'There are validation errors on the current step. Do you want to continue anyway?\n\nNote: You will need to fix these errors before generating your will.',
+          variant: 'warning',
+          confirmLabel: 'Continue Anyway',
+          cancelLabel: 'Stay Here',
+          onConfirm: () => {
+            setConfirmDialog(prev => ({ ...prev, isOpen: false }))
+            setErrors({})
+            setCurrentStep(stepIndex)
+            window.scrollTo(0, 0)
+          },
+        })
+        return
+      }
+
+      // Navigate to the target step
       setErrors({})
       setCurrentStep(stepIndex)
       window.scrollTo(0, 0)
-      return
-    }
+      setTimeout(() => stepHeadingRef.current?.focus(), 0)
+    },
+    [currentStep, formData]
+  )
 
-    // Going forwards - validate current step but allow navigation anyway
-    const stepErrors = validateStep(currentStep, formData)
-    if (Object.keys(stepErrors).length > 0) {
-      // Show errors but still allow navigation (user's choice)
-      setErrors(stepErrors)
-      // Use confirm dialog to let user decide
-      const proceed = confirm(
-        'There are validation errors on the current step. Do you want to continue anyway?\n\n' +
-        'Note: You will need to fix these errors before generating your will.'
-      )
-      if (!proceed) {
-        return
-      }
-    }
-
-    // Navigate to the target step
-    setErrors({})
-    setCurrentStep(stepIndex)
-    window.scrollTo(0, 0)
-  }
-
-  const handleReset = () => {
-    if (confirm('Are you sure you want to start over? All your information will be cleared.')) {
-      resetForm()
-      setCurrentStep(0)
-      setErrors({})
-    }
-  }
-
-  const handleSave = () => {
-    setShowSaveNotice(true)
-    setTimeout(() => setShowSaveNotice(false), 3000)
-  }
+  const handleReset = useCallback(() => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Start Over?',
+      message:
+        'Are you sure you want to start over? All your information will be cleared.\n\nThis action cannot be undone.',
+      variant: 'destructive',
+      confirmLabel: 'Yes, Start Over',
+      cancelLabel: 'Cancel',
+      onConfirm: () => {
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }))
+        resetForm()
+        setCurrentStep(0)
+        setErrors({})
+      },
+    })
+  }, [resetForm])
 
   const renderStep = () => {
     switch (currentStep) {
       case 0:
         return (
-          <TestatorInfo
-            data={formData.testator}
-            onChange={handleFieldChange}
-            errors={errors}
-          />
+          <TestatorInfo data={formData.testator} onChange={handleFieldChange} errors={errors} />
         )
       case 1:
         return (
-          <ExecutorInfo
-            data={formData.executor}
-            onChange={handleFieldChange}
-            errors={errors}
-          />
+          <ExecutorInfo data={formData.executor} onChange={handleFieldChange} errors={errors} />
         )
       case 2:
         return (
@@ -209,7 +240,7 @@ export function WillGenerator() {
                 pets: formData.pets,
                 funeral: formData.funeral,
                 realProperty: formData.realProperty,
-                debtsAndTaxes: formData.debtsAndTaxes
+                debtsAndTaxes: formData.debtsAndTaxes,
               }}
               onChange={handleFieldChange}
               errors={errors}
@@ -234,12 +265,7 @@ export function WillGenerator() {
           />
         )
       case 7:
-        return (
-          <ReviewGenerate
-            formData={formData}
-            onReset={handleReset}
-          />
-        )
+        return <ReviewGenerate formData={formData} onReset={handleReset} />
       default:
         return null
     }
@@ -255,18 +281,11 @@ export function WillGenerator() {
         stepValidation={stepValidationStatus}
       />
 
-      {/* Save Notice */}
-      {showSaveNotice && (
-        <Alert variant="success" className="mb-4">
-          Your progress is automatically saved to your browser.
-        </Alert>
-      )}
-
       {/* Auto-save notice on first visit */}
       {currentStep === 0 && (
         <Alert variant="info" className="mb-6">
           <div className="flex items-start gap-2">
-            <Save className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <Save className="w-4 h-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
             <div>
               <strong>Auto-Save Enabled:</strong> Your progress is automatically saved to your
               browser. You can close this page and return later to continue where you left off.
@@ -277,41 +296,61 @@ export function WillGenerator() {
 
       {/* Validation Errors Summary */}
       {Object.keys(errors).length > 0 && (
-        <Alert variant="error" className="mb-6" title="Please fix the following errors:">
-          <ul className="list-disc list-inside mt-2">
-            {Object.values(errors).map((error, i) => (
-              <li key={i}>{error}</li>
-            ))}
-          </ul>
-        </Alert>
+        <div
+          ref={errorAlertRef}
+          tabIndex={-1}
+          className="focus:ring-2 focus:ring-red-500 focus:outline-none rounded-lg"
+          role="alert"
+          aria-live="assertive"
+        >
+          <Alert variant="error" className="mb-6" title="Please fix the following errors:">
+            <ul className="list-disc list-inside mt-2">
+              {Object.values(errors).map((error, i) => (
+                <li key={i}>{error}</li>
+              ))}
+            </ul>
+          </Alert>
+        </div>
       )}
 
+      {/* Step Title */}
+      <h2
+        ref={stepHeadingRef}
+        tabIndex={-1}
+        className="text-2xl font-bold text-gray-900 dark:text-white mb-6 focus:outline-none"
+      >
+        {STEPS[currentStep].label}
+      </h2>
+
       {/* Step Content */}
-      <div className="mb-8">
-        {renderStep()}
-      </div>
+      <div className="mb-8">{renderStep()}</div>
 
       {/* Navigation Buttons */}
       {currentStep < STEPS.length - 1 && (
         <div className="flex justify-between gap-4">
           <button
+            type="button"
             onClick={handlePrevious}
             disabled={currentStep === 0}
+            aria-label={currentStep === 0 ? 'Previous step (disabled)' : 'Go to previous step'}
             className={`
               py-3 px-6 rounded-lg font-medium
               flex items-center gap-2 transition-colors
-              ${currentStep === 0
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+              ${
+                currentStep === 0
+                  ? 'bg-gray-100 text-gray-500 cursor-not-allowed dark:bg-gray-800 dark:text-gray-400'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
               }
             `}
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-5 h-5" aria-hidden="true" />
             Previous
           </button>
 
           <button
+            type="button"
             onClick={handleNext}
+            aria-label="Go to next step"
             className="
               py-3 px-6 rounded-lg font-medium
               bg-blue-600 text-white hover:bg-blue-700
@@ -319,23 +358,22 @@ export function WillGenerator() {
             "
           >
             Next
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
       )}
 
-      {/* Legal Disclaimer Footer */}
-      <div className="mt-12 pt-6 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex items-start gap-3 text-sm text-gray-500 dark:text-gray-400">
-          <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-          <p>
-            <strong>Disclaimer:</strong> This tool provides a template for informational purposes
-            only and does not constitute legal advice. The use of this tool does not create an
-            attorney-client relationship. For complex estates or specific legal questions, please
-            consult a licensed attorney in your state.
-          </p>
-        </div>
-      </div>
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        variant={confirmDialog.variant}
+        confirmLabel={confirmDialog.confirmLabel}
+        cancelLabel={confirmDialog.cancelLabel}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={closeConfirmDialog}
+      />
     </div>
   )
 }

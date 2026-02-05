@@ -2,7 +2,7 @@ import React from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { Card, FormField, Alert } from '../ui'
 
-export function EstateDistribution({ data, testator, children, onChange, errors = {} }) {
+export function EstateDistribution({ data, testator, children, onChange }) {
   const isMarried = testator.maritalStatus === 'married'
   const hasChildren = children.length > 0
 
@@ -10,7 +10,7 @@ export function EstateDistribution({ data, testator, children, onChange, errors 
     onChange('residuaryEstate', field, value)
   }
 
-  const handleDistributionTypeChange = (e) => {
+  const handleDistributionTypeChange = e => {
     const newType = e.target.value
     handleChange('distributionType', newType)
 
@@ -31,7 +31,12 @@ export function EstateDistribution({ data, testator, children, onChange, errors 
     const current = data.customBeneficiaries || []
     onChange('residuaryEstate', 'customBeneficiaries', [
       ...current,
-      { name: '', relationship: '', share: 0 }
+      {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+        name: '',
+        relationship: '',
+        share: 0,
+      },
     ])
   }
 
@@ -41,7 +46,7 @@ export function EstateDistribution({ data, testator, children, onChange, errors 
     onChange('residuaryEstate', 'customBeneficiaries', updated)
   }
 
-  const removeCustomBeneficiary = (index) => {
+  const removeCustomBeneficiary = index => {
     onChange(
       'residuaryEstate',
       'customBeneficiaries',
@@ -93,36 +98,38 @@ export function EstateDistribution({ data, testator, children, onChange, errors 
 
           {data.distributionType === 'split' && isMarried && hasChildren && (
             <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-              <h4 className="font-medium text-gray-900 dark:text-white">
-                Percentage Split
-              </h4>
+              <h4 className="font-medium text-gray-900 dark:text-white">Percentage Split</h4>
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   label={`To Spouse (${testator.spouseName || 'spouse'})`}
                   name="spouseShare"
                   type="number"
                   value={data.spouseShare}
-                  onChange={(e) => {
+                  onChange={e => {
                     const spouseShare = Number(e.target.value)
                     handleChange('spouseShare', spouseShare)
                     handleChange('childrenShare', 100 - spouseShare)
                   }}
                   placeholder="50"
+                  min={0}
+                  max={100}
                 />
                 <FormField
                   label="To Children (divided equally)"
                   name="childrenShare"
                   type="number"
                   value={data.childrenShare}
-                  onChange={(e) => {
+                  onChange={e => {
                     const childrenShare = Number(e.target.value)
                     handleChange('childrenShare', childrenShare)
                     handleChange('spouseShare', 100 - childrenShare)
                   }}
                   placeholder="50"
+                  min={0}
+                  max={100}
                 />
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
                 Total: {Number(data.spouseShare) + Number(data.childrenShare)}%
                 {Number(data.spouseShare) + Number(data.childrenShare) !== 100 && (
                   <span className="text-red-500 ml-2">(Must equal 100%)</span>
@@ -133,14 +140,14 @@ export function EstateDistribution({ data, testator, children, onChange, errors 
 
           {data.distributionType === 'custom' && (
             <div className="space-y-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Add beneficiaries and specify what percentage each should receive.
-                Percentages must total 100%.
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Add beneficiaries and specify what percentage each should receive. Percentages must
+                total 100%.
               </p>
 
               {(data.customBeneficiaries || []).map((beneficiary, index) => (
                 <div
-                  key={index}
+                  key={beneficiary.id || index}
                   className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-3"
                 >
                   <div className="flex items-center justify-between">
@@ -151,8 +158,9 @@ export function EstateDistribution({ data, testator, children, onChange, errors 
                       type="button"
                       onClick={() => removeCustomBeneficiary(index)}
                       className="text-red-500 hover:text-red-700 p-1"
+                      aria-label={`Remove beneficiary ${index + 1}${beneficiary.name ? `: ${beneficiary.name}` : ''}`}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" aria-hidden="true" />
                     </button>
                   </div>
 
@@ -161,7 +169,7 @@ export function EstateDistribution({ data, testator, children, onChange, errors 
                       label="Name"
                       name={`custom-${index}-name`}
                       value={beneficiary.name}
-                      onChange={(e) => updateCustomBeneficiary(index, 'name', e.target.value)}
+                      onChange={e => updateCustomBeneficiary(index, 'name', e.target.value)}
                       placeholder="Full legal name"
                       required
                     />
@@ -169,7 +177,7 @@ export function EstateDistribution({ data, testator, children, onChange, errors 
                       label="Relationship"
                       name={`custom-${index}-relationship`}
                       value={beneficiary.relationship}
-                      onChange={(e) => updateCustomBeneficiary(index, 'relationship', e.target.value)}
+                      onChange={e => updateCustomBeneficiary(index, 'relationship', e.target.value)}
                       placeholder="e.g., Sibling, Charity"
                     />
                     <FormField
@@ -177,7 +185,7 @@ export function EstateDistribution({ data, testator, children, onChange, errors 
                       name={`custom-${index}-share`}
                       type="number"
                       value={beneficiary.share}
-                      onChange={(e) => updateCustomBeneficiary(index, 'share', e.target.value)}
+                      onChange={e => updateCustomBeneficiary(index, 'share', e.target.value)}
                       placeholder="25"
                     />
                   </div>
@@ -187,20 +195,21 @@ export function EstateDistribution({ data, testator, children, onChange, errors 
               <button
                 type="button"
                 onClick={addCustomBeneficiary}
+                aria-label="Add a custom beneficiary to your estate distribution"
                 className="
                   w-full py-3 px-4 rounded-lg border-2 border-dashed
                   border-gray-300 dark:border-gray-600
-                  text-gray-600 dark:text-gray-400
+                  text-gray-600 dark:text-gray-300
                   hover:border-blue-500 hover:text-blue-500
                   transition-colors flex items-center justify-center gap-2
                 "
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-5 h-5" aria-hidden="true" />
                 Add Beneficiary
               </button>
 
               {data.customBeneficiaries && data.customBeneficiaries.length > 0 && (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   Total: {getTotalCustomShare()}%
                   {getTotalCustomShare() !== 100 && (
                     <span className="text-red-500 ml-2">(Must equal 100%)</span>
@@ -219,10 +228,10 @@ export function EstateDistribution({ data, testator, children, onChange, errors 
             name="perStirpes"
             label="If a beneficiary predeceases me, their share passes to their descendants (per stirpes)"
             value={data.perStirpes}
-            onChange={(e) => handleChange('perStirpes', e.target.checked)}
+            onChange={e => handleChange('perStirpes', e.target.checked)}
             tooltip="Per stirpes means if one of your children dies before you, their share goes to their children (your grandchildren) instead of being redistributed among your surviving children."
           />
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
             {data.perStirpes
               ? 'If a beneficiary predeceases you, their descendants will inherit their share.'
               : 'If a beneficiary predeceases you, their share will be redistributed among the surviving beneficiaries.'}
@@ -231,20 +240,14 @@ export function EstateDistribution({ data, testator, children, onChange, errors 
       )}
 
       <Alert variant="info" title="What is the Residuary Estate?">
-        <p className="mt-1">
-          The residuary estate is everything you own that:
-        </p>
+        <p className="mt-1">The residuary estate is everything you own that:</p>
         <ul className="list-disc list-inside space-y-1 mt-2">
           <li>Is not specifically gifted to someone in this will</li>
           <li>Doesn't pass by beneficiary designation (life insurance, retirement accounts)</li>
           <li>Doesn't pass by joint ownership</li>
         </ul>
-        <p className="mt-2">
-          This "catch-all" provision ensures nothing is left unaccounted for.
-        </p>
+        <p className="mt-2">This "catch-all" provision ensures nothing is left unaccounted for.</p>
       </Alert>
     </div>
   )
 }
-
-export default EstateDistribution

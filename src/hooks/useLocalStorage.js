@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 // Deep merge helper to combine stored data with initial state
 // This ensures new fields are added when the app updates
@@ -28,36 +28,33 @@ export function useLocalStorage(key, initialValue) {
   const [storedValue, setStoredValue] = useState(() => {
     try {
       const item = window.localStorage.getItem(key)
-      if (item) {
-        const parsed = JSON.parse(item)
-        // Merge stored value with initial value to handle new fields
-        return deepMerge(initialValue, parsed)
+      if (!item) {
+        return initialValue
       }
-      return initialValue
-    } catch (error) {
-      console.error('Error reading from localStorage:', error)
+      const parsed = JSON.parse(item)
+      return deepMerge(initialValue, parsed)
+    } catch {
       return initialValue
     }
   })
 
+  // Save to localStorage whenever value changes
   useEffect(() => {
     try {
       window.localStorage.setItem(key, JSON.stringify(storedValue))
-    } catch (error) {
-      console.error('Error writing to localStorage:', error)
+    } catch {
+      // Ignore write errors (e.g., quota exceeded)
     }
   }, [key, storedValue])
 
-  const clearStorage = () => {
+  const clearStorage = useCallback(() => {
     try {
       window.localStorage.removeItem(key)
       setStoredValue(initialValue)
-    } catch (error) {
-      console.error('Error clearing localStorage:', error)
+    } catch {
+      // Ignore errors
     }
-  }
+  }, [key, initialValue])
 
   return [storedValue, setStoredValue, clearStorage]
 }
-
-export default useLocalStorage

@@ -31,5 +31,3 @@ export function isStepComplete(stepIndex, formData) {
   const errors = validateStep(stepIndex, formData)
   return Object.keys(errors).length === 0
 }
-
-export default validateStep

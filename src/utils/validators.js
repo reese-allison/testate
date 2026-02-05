@@ -3,24 +3,45 @@
  * Each validator returns an errors object with field names as keys
  */
 
+// Epsilon for floating-point comparison (handles 99.99 + 0.01 = 100 cases)
+const PERCENTAGE_EPSILON = 0.01
+
 // Common validation helpers
-export const isRequired = (value) => {
+export const isRequired = value => {
   if (typeof value === 'string') return value.trim().length > 0
   if (Array.isArray(value)) return value.length > 0
   return value !== null && value !== undefined
 }
 
-export const isValidZip = (zip) => /^\d{5}(-\d{4})?$/.test(zip)
+export const isValidZip = zip => /^\d{5}(-\d{4})?$/.test(zip)
 
-export const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+// Improved email validation - requires at least 2 chars in TLD
+export const isValidEmail = email => {
+  if (!email || typeof email !== 'string') return false
+  if (email.length > 254) return false // RFC 5321 max length
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)
+}
 
-export const isValidPhone = (phone) => /^\d{10}$|^\d{3}-\d{3}-\d{4}$/.test(phone.replace(/\s/g, ''))
+// Improved phone validation - accepts common formats
+export const isValidPhone = phone => {
+  if (!phone || typeof phone !== 'string') return false
+  // Remove common formatting characters
+  const cleaned = phone.replace(/[\s\-().]/g, '')
+  return /^\d{10}$/.test(cleaned)
+}
+
+// Helper to check if two numbers are approximately equal
+const isApproximatelyEqual = (a, b, epsilon = PERCENTAGE_EPSILON) => Math.abs(a - b) < epsilon
 
 /**
  * Step 0: Testator Information Validation
  */
 export function validateTestator(testator) {
   const errors = {}
+
+  if (!testator) {
+    return { testator: 'Testator information is required' }
+  }
 
   // Residence state is required for will jurisdiction
   if (!isRequired(testator.residenceState)) {
@@ -62,6 +83,10 @@ export function validateTestator(testator) {
 export function validateExecutor(executor) {
   const errors = {}
 
+  if (!executor) {
+    return { executor: 'Executor information is required' }
+  }
+
   if (!isRequired(executor.name)) {
     errors.name = 'Personal Representative name is required'
   }
@@ -84,6 +109,8 @@ export function validateExecutor(executor) {
 
   if (!isRequired(executor.zip)) {
     errors.zip = 'ZIP code is required'
+  } else if (!isValidZip(executor.zip)) {
+    errors.zip = 'Please enter a valid ZIP code (e.g., 33101 or 33101-1234)'
   }
 
   return errors
@@ -117,6 +144,10 @@ export function validateChildren(children, guardian) {
 export function validateGifts(specificGifts) {
   const errors = {}
 
+  if (!Array.isArray(specificGifts)) {
+    return errors
+  }
+
   specificGifts.forEach((gift, i) => {
     if (!isRequired(gift.description)) {
       errors[`gift_${i}_description`] = `Gift ${i + 1} description is required`
@@ -131,14 +162,49 @@ export function validateGifts(specificGifts) {
 
 /**
  * Step 4: Estate Distribution Validation
+ * @param {Object} residuaryEstate - Distribution settings
+ * @param {Object} testator - Testator info (for marital status check)
+ * @param {Array} children - Children array (for children distribution check)
  */
-export function validateDistribution(residuaryEstate) {
+export function validateDistribution(residuaryEstate, testator = {}, children = []) {
   const errors = {}
 
+  if (!residuaryEstate) {
+    return errors
+  }
+
+  const isMarried = testator.maritalStatus === 'married'
+  const hasChildren = children.length > 0
+
+  // Validate distribution type matches testator situation
+  if (residuaryEstate.distributionType === 'spouse' && !isMarried) {
+    errors.distributionType =
+      'Spouse distribution requires married status. Please update your marital status or choose a different distribution method.'
+  }
+
+  if (residuaryEstate.distributionType === 'children' && !hasChildren) {
+    errors.distributionType =
+      'Children distribution requires at least one child. Please add children or choose a different distribution method.'
+  }
+
   if (residuaryEstate.distributionType === 'split') {
-    const total = Number(residuaryEstate.spouseShare) + Number(residuaryEstate.childrenShare)
-    if (total !== 100) {
-      errors.distribution = 'Spouse and children shares must total 100%'
+    if (!isMarried) {
+      errors.distributionType =
+        'Split distribution requires married status. Please update your marital status or choose a different distribution method.'
+    } else if (!hasChildren) {
+      errors.distributionType =
+        'Split distribution requires at least one child. Please add children or choose a different distribution method.'
+    } else {
+      const spouseShare = Number(residuaryEstate.spouseShare) || 0
+      const childrenShare = Number(residuaryEstate.childrenShare) || 0
+      const total = spouseShare + childrenShare
+
+      // Validate shares are positive
+      if (spouseShare <= 0 || childrenShare <= 0) {
+        errors.distribution = 'Both spouse and children shares must be greater than 0%'
+      } else if (!isApproximatelyEqual(total, 100)) {
+        errors.distribution = 'Spouse and children shares must total 100%'
+      }
     }
   }
 
@@ -148,13 +214,24 @@ export function validateDistribution(residuaryEstate) {
 
     if (beneficiaries.length === 0) {
       errors.customBeneficiaries = 'Please add at least one beneficiary'
-    } else if (customTotal !== 100) {
-      errors.customBeneficiaries = 'Beneficiary shares must total 100%'
+    } else {
+      // Check for duplicate beneficiary names first
+      const names = beneficiaries.map(b => b.name?.toLowerCase().trim()).filter(Boolean)
+      const uniqueNames = new Set(names)
+      if (names.length !== uniqueNames.size) {
+        errors.customBeneficiaries = 'Beneficiary names must be unique to avoid legal ambiguity'
+      } else if (!isApproximatelyEqual(customTotal, 100)) {
+        errors.customBeneficiaries = 'Beneficiary shares must total 100%'
+      }
     }
 
     beneficiaries.forEach((b, i) => {
       if (!isRequired(b.name)) {
         errors[`custom_${i}_name`] = `Beneficiary ${i + 1} name is required`
+      }
+      const share = Number(b.share) || 0
+      if (share <= 0) {
+        errors[`custom_${i}_share`] = `Beneficiary ${i + 1} share must be greater than 0%`
       }
     })
   }
@@ -167,7 +244,12 @@ export function validateDistribution(residuaryEstate) {
  */
 export function validateAdditionalProvisions(formData) {
   const errors = {}
-  const { digitalAssets, pets, funeral, realProperty, debtsAndTaxes, customProvisions } = formData
+
+  if (!formData) {
+    return errors
+  }
+
+  const { pets, realProperty, customProvisions } = formData
 
   // Digital assets validation (optional but if included, fiduciary recommended)
   // Currently no required fields
@@ -250,14 +332,13 @@ export function validateReview(formData) {
  * Map of step index to validator function
  */
 export const stepValidators = {
-  0: (formData) => validateTestator(formData.testator),
-  1: (formData) => validateExecutor(formData.executor),
-  2: (formData) => validateChildren(formData.children, formData.guardian),
-  3: (formData) => validateGifts(formData.specificGifts),
-  4: (formData) => validateDistribution(formData.residuaryEstate),
-  5: (formData) => validateAdditionalProvisions(formData),
-  6: (formData) => validateDisinheritance(formData.disinheritance),
-  7: (formData) => validateReview(formData)
+  0: formData => validateTestator(formData.testator),
+  1: formData => validateExecutor(formData.executor),
+  2: formData => validateChildren(formData.children, formData.guardian),
+  3: formData => validateGifts(formData.specificGifts),
+  4: formData =>
+    validateDistribution(formData.residuaryEstate, formData.testator, formData.children),
+  5: formData => validateAdditionalProvisions(formData),
+  6: formData => validateDisinheritance(formData.disinheritance),
+  7: formData => validateReview(formData),
 }
-
-export default stepValidators

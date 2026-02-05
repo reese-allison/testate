@@ -11,7 +11,7 @@ const createMinimalFormData = (residenceState = 'FL') => ({
     county: 'Miami-Dade',
     maritalStatus: 'single',
     spouseName: '',
-    residenceState: residenceState
+    residenceState: residenceState,
   },
   executor: {
     name: 'Jane Doe',
@@ -21,7 +21,7 @@ const createMinimalFormData = (residenceState = 'FL') => ({
     state: 'Florida',
     zip: '32801',
     alternateName: '',
-    bondRequired: false
+    bondRequired: false,
   },
   children: [],
   guardian: { name: '', relationship: '' },
@@ -31,7 +31,7 @@ const createMinimalFormData = (residenceState = 'FL') => ({
     spouseShare: 100,
     childrenShare: 0,
     customBeneficiaries: [],
-    perStirpes: true
+    perStirpes: true,
   },
   digitalAssets: { include: false },
   pets: { include: false, items: [] },
@@ -41,7 +41,7 @@ const createMinimalFormData = (residenceState = 'FL') => ({
   disinheritance: { include: false, persons: [] },
   customProvisions: { include: false, items: [] },
   survivorshipPeriod: 30,
-  noContestClause: true
+  noContestClause: true,
 })
 
 describe('generateWillText', () => {
@@ -109,7 +109,7 @@ describe('generateWillText', () => {
       const formData = createMinimalFormData()
       formData.children = [
         { name: 'Emily Rose Smith', relationship: 'biological', isMinor: true },
-        { name: 'Michael John Smith', relationship: 'adopted', isMinor: false }
+        { name: 'Michael John Smith', relationship: 'adopted', isMinor: false },
       ]
       const text = generateWillText(formData)
 
@@ -195,8 +195,16 @@ describe('generateWillText', () => {
     it('lists specific gifts when present', () => {
       const formData = createMinimalFormData()
       formData.specificGifts = [
-        { description: '2020 Toyota Camry', beneficiary: 'Emily Smith', conditions: 'Upon reaching age 21' },
-        { description: 'Diamond ring', beneficiary: 'Jane Smith', alternativeBeneficiary: 'Emily Smith' }
+        {
+          description: '2020 Toyota Camry',
+          beneficiary: 'Emily Smith',
+          conditions: 'Upon reaching age 21',
+        },
+        {
+          description: 'Diamond ring',
+          beneficiary: 'Jane Smith',
+          alternativeBeneficiary: 'Emily Smith',
+        },
       ]
       const text = generateWillText(formData)
 
@@ -204,7 +212,134 @@ describe('generateWillText', () => {
       expect(text).toContain('2020 Toyota Camry to Emily Smith')
       expect(text).toContain('Conditions: Upon reaching age 21')
       expect(text).toContain('Diamond ring to Jane Smith')
-      expect(text).toContain('If Jane Smith does not survive me, this gift shall pass to Emily Smith')
+      expect(text).toContain(
+        'If Jane Smith does not survive me, this gift shall pass to Emily Smith'
+      )
+    })
+  })
+
+  describe('Real Property', () => {
+    it('does not include real property section when disabled', () => {
+      const formData = createMinimalFormData()
+      formData.realProperty = { include: false, items: [] }
+      const text = generateWillText(formData)
+
+      // Should not contain "REAL PROPERTY" as an article title (but may contain "Homestead" mentions)
+      expect(text).not.toMatch(/ARTICLE [IVXLCDM]+ - REAL PROPERTY/)
+    })
+
+    it('includes real property section when enabled with items', () => {
+      const formData = createMinimalFormData()
+      formData.realProperty = {
+        include: true,
+        items: [
+          {
+            address: '123 Main St, Miami, FL 33101',
+            description: 'Primary residence',
+            beneficiary: 'Jane Smith',
+            instructions: 'To be held in trust until age 25',
+          },
+        ],
+      }
+      const text = generateWillText(formData)
+
+      expect(text).toContain('REAL PROPERTY')
+      expect(text).toContain('123 Main St, Miami, FL 33101')
+      expect(text).toContain('Primary residence')
+      expect(text).toContain('shall pass to Jane Smith')
+      expect(text).toContain('To be held in trust until age 25')
+    })
+
+    it('handles multiple real properties', () => {
+      const formData = createMinimalFormData()
+      formData.realProperty = {
+        include: true,
+        items: [
+          {
+            address: '123 Main St',
+            beneficiary: 'Jane Smith',
+          },
+          {
+            address: '456 Oak Ave',
+            beneficiary: 'John Doe',
+          },
+        ],
+      }
+      const text = generateWillText(formData)
+
+      expect(text).toContain('1. The property located at 123 Main St')
+      expect(text).toContain('shall pass to Jane Smith')
+      expect(text).toContain('2. The property located at 456 Oak Ave')
+      expect(text).toContain('shall pass to John Doe')
+    })
+
+    it('handles real property without description or instructions', () => {
+      const formData = createMinimalFormData()
+      formData.realProperty = {
+        include: true,
+        items: [
+          {
+            address: '123 Main St',
+            beneficiary: 'Jane Smith',
+          },
+        ],
+      }
+      const text = generateWillText(formData)
+
+      expect(text).toContain('123 Main St')
+      expect(text).toContain('shall pass to Jane Smith')
+      expect(text).not.toContain('Special instructions')
+    })
+  })
+
+  describe('Debts and Taxes', () => {
+    it('includes default debts section when debtsAndTaxes is disabled', () => {
+      const formData = createMinimalFormData()
+      formData.debtsAndTaxes = { include: false }
+      const text = generateWillText(formData)
+
+      expect(text).toContain('DEBTS AND EXPENSES')
+      expect(text).toContain(
+        'I direct my Personal Representative to pay all of my legally enforceable debts'
+      )
+    })
+
+    it('includes residuary payment order when enabled', () => {
+      const formData = createMinimalFormData()
+      formData.debtsAndTaxes = {
+        include: true,
+        paymentOrder: 'residuary',
+      }
+      const text = generateWillText(formData)
+
+      expect(text).toContain('DEBTS AND TAXES')
+      expect(text).toContain('shall be paid from my residuary estate before distribution')
+    })
+
+    it('includes proportional payment order when enabled', () => {
+      const formData = createMinimalFormData()
+      formData.debtsAndTaxes = {
+        include: true,
+        paymentOrder: 'proportional',
+      }
+      const text = generateWillText(formData)
+
+      expect(text).toContain('DEBTS AND TAXES')
+      expect(text).toContain('shall be paid proportionally from all assets of my estate')
+    })
+
+    it('includes specific payment instructions when enabled', () => {
+      const formData = createMinimalFormData()
+      formData.debtsAndTaxes = {
+        include: true,
+        paymentOrder: 'specific',
+        specificInstructions: 'Pay mortgage from life insurance proceeds first.',
+      }
+      const text = generateWillText(formData)
+
+      expect(text).toContain('DEBTS AND TAXES')
+      expect(text).toContain('My debts, expenses, and taxes shall be paid as follows')
+      expect(text).toContain('Pay mortgage from life insurance proceeds first.')
     })
   })
 
@@ -234,12 +369,40 @@ describe('generateWillText', () => {
       formData.residuaryEstate.distributionType = 'custom'
       formData.residuaryEstate.customBeneficiaries = [
         { name: 'Person A', share: 50, relationship: 'Friend' },
-        { name: 'Person B', share: 50 }
+        { name: 'Person B', share: 50 },
       ]
       const text = generateWillText(formData)
 
       expect(text).toContain('50% to Person A (Friend)')
       expect(text).toContain('50% to Person B')
+    })
+
+    it('falls back to intestacy when spouse distribution selected but not married', () => {
+      const formData = createMinimalFormData()
+      formData.testator.maritalStatus = 'single'
+      formData.residuaryEstate.distributionType = 'spouse'
+      const text = generateWillText(formData)
+
+      expect(text).toContain('intestacy laws of the State of Florida')
+    })
+
+    it('falls back to intestacy when children distribution selected but no children', () => {
+      const formData = createMinimalFormData()
+      formData.children = []
+      formData.residuaryEstate.distributionType = 'children'
+      const text = generateWillText(formData)
+
+      expect(text).toContain('intestacy laws of the State of Florida')
+    })
+
+    it('falls back to intestacy when split distribution selected but not married', () => {
+      const formData = createMinimalFormData()
+      formData.testator.maritalStatus = 'single'
+      formData.children = [{ name: 'Child 1' }]
+      formData.residuaryEstate.distributionType = 'split'
+      const text = generateWillText(formData)
+
+      expect(text).toContain('intestacy laws of the State of Florida')
     })
   })
 
@@ -277,7 +440,7 @@ describe('generateWillText', () => {
         fiduciary: 'Robert Wilson',
         socialMedia: 'delete',
         email: 'archive',
-        cloudStorage: 'transfer'
+        cloudStorage: 'transfer',
       }
       const text = generateWillText(formData)
 
@@ -302,14 +465,16 @@ describe('generateWillText', () => {
       const formData = createMinimalFormData()
       formData.pets = {
         include: true,
-        items: [{
-          type: 'Dog',
-          name: 'Max',
-          caretaker: 'Mary Johnson',
-          alternateCaretaker: 'Bob Smith',
-          funds: '$5,000',
-          instructions: 'Likes long walks'
-        }]
+        items: [
+          {
+            type: 'Dog',
+            name: 'Max',
+            caretaker: 'Mary Johnson',
+            alternateCaretaker: 'Bob Smith',
+            funds: '$5,000',
+            instructions: 'Likes long walks',
+          },
+        ],
       }
       const text = generateWillText(formData)
 
@@ -337,7 +502,7 @@ describe('generateWillText', () => {
         preference: 'cremation',
         serviceType: 'memorial',
         location: 'Miami Beach Chapel',
-        memorialDonations: 'American Heart Association'
+        memorialDonations: 'American Heart Association',
       }
       const text = generateWillText(formData)
 
@@ -361,11 +526,13 @@ describe('generateWillText', () => {
       const formData = createMinimalFormData()
       formData.disinheritance = {
         include: true,
-        persons: [{
-          name: 'John Doe Jr',
-          relationship: 'Son',
-          reason: 'Personal reasons'
-        }]
+        persons: [
+          {
+            name: 'John Doe Jr',
+            relationship: 'Son',
+            reason: 'Personal reasons',
+          },
+        ],
       }
       const text = generateWillText(formData)
 
@@ -398,15 +565,20 @@ describe('generateWillText', () => {
       const formData = createMinimalFormData()
       formData.customProvisions = {
         include: true,
-        items: [{
-          title: 'Business Instructions',
-          content: 'My family business shall be managed by my spouse until my children reach age 25.'
-        }]
+        items: [
+          {
+            title: 'Business Instructions',
+            content:
+              'My family business shall be managed by my spouse until my children reach age 25.',
+          },
+        ],
       }
       const text = generateWillText(formData)
 
       expect(text).toContain('BUSINESS INSTRUCTIONS')
-      expect(text).toContain('My family business shall be managed by my spouse until my children reach age 25.')
+      expect(text).toContain(
+        'My family business shall be managed by my spouse until my children reach age 25.'
+      )
     })
 
     it('includes multiple custom provisions as separate articles', () => {
@@ -416,13 +588,13 @@ describe('generateWillText', () => {
         items: [
           {
             title: 'Family Heirlooms',
-            content: 'The antique clock shall remain in the family.'
+            content: 'The antique clock shall remain in the family.',
           },
           {
             title: 'Charitable Wishes',
-            content: 'I request my family consider annual donations to local charities.'
-          }
-        ]
+            content: 'I request my family consider annual donations to local charities.',
+          },
+        ],
       }
       const text = generateWillText(formData)
 
@@ -436,10 +608,12 @@ describe('generateWillText', () => {
       const formData = createMinimalFormData()
       formData.customProvisions = {
         include: true,
-        items: [{
-          title: 'Special Instructions',
-          content: 'These are my special instructions.'
-        }]
+        items: [
+          {
+            title: 'Special Instructions',
+            content: 'These are my special instructions.',
+          },
+        ],
       }
       const text = generateWillText(formData)
 
@@ -635,7 +809,7 @@ describe('generateWillText', () => {
         fiduciary: 'John Doe',
         socialMedia: 'delete',
         email: 'archive',
-        cloudStorage: 'transfer'
+        cloudStorage: 'transfer',
       }
       const text = generateWillText(formData)
 

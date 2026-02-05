@@ -11,7 +11,7 @@ const createEmptyFormData = () => ({
     county: '',
     maritalStatus: 'single',
     spouseName: '',
-    residenceState: 'FL'
+    residenceState: 'FL',
   },
   executor: {
     name: '',
@@ -19,7 +19,7 @@ const createEmptyFormData = () => ({
     address: '',
     city: '',
     state: '',
-    zip: ''
+    zip: '',
   },
   children: [],
   guardian: { name: '', relationship: '' },
@@ -29,12 +29,12 @@ const createEmptyFormData = () => ({
     spouseShare: 100,
     childrenShare: 0,
     customBeneficiaries: [],
-    perStirpes: true
+    perStirpes: true,
   },
   digitalAssets: { include: false, fiduciary: '' },
   pets: { include: false, items: [] },
   funeral: { include: false },
-  disinheritance: { include: false, persons: [] }
+  disinheritance: { include: false, persons: [] },
 })
 
 describe('validateStep', () => {
@@ -58,7 +58,7 @@ describe('validateStep', () => {
         address: '123 Main St',
         city: 'Miami',
         zip: '33101',
-        county: 'Miami-Dade'
+        county: 'Miami-Dade',
       }
       const errors = validateStep(0, formData)
 
@@ -73,7 +73,7 @@ describe('validateStep', () => {
         address: '123 Main St',
         city: 'Miami',
         zip: '33101',
-        county: 'Miami-Dade'
+        county: 'Miami-Dade',
       }
       const errors = validateStep(0, formData)
 
@@ -88,7 +88,7 @@ describe('validateStep', () => {
         address: '123 Main St',
         city: 'Miami',
         zip: '33101-1234',
-        county: 'Miami-Dade'
+        county: 'Miami-Dade',
       }
       const errors = validateStep(0, formData)
 
@@ -103,7 +103,7 @@ describe('validateStep', () => {
         address: '123 Main St',
         city: 'Miami',
         zip: '1234',
-        county: 'Miami-Dade'
+        county: 'Miami-Dade',
       }
       const errors = validateStep(0, formData)
 
@@ -118,7 +118,7 @@ describe('validateStep', () => {
         address: '123 Main St',
         city: 'Miami',
         zip: 'abcde',
-        county: 'Miami-Dade'
+        county: 'Miami-Dade',
       }
       const errors = validateStep(0, formData)
 
@@ -135,7 +135,7 @@ describe('validateStep', () => {
         zip: '33101',
         county: 'Miami-Dade',
         maritalStatus: 'married',
-        spouseName: ''
+        spouseName: '',
       }
       const errors = validateStep(0, formData)
 
@@ -152,7 +152,7 @@ describe('validateStep', () => {
         zip: '33101',
         county: 'Miami-Dade',
         maritalStatus: 'single',
-        spouseName: ''
+        spouseName: '',
       }
       const errors = validateStep(0, formData)
 
@@ -181,7 +181,7 @@ describe('validateStep', () => {
         address: '456 Oak St',
         city: 'Orlando',
         state: 'Florida',
-        zip: '32801'
+        zip: '32801',
       }
       const errors = validateStep(1, formData)
 
@@ -251,19 +251,35 @@ describe('validateStep', () => {
   })
 
   describe('Step 4 - Estate Distribution', () => {
-    it('returns no errors for default spouse distribution', () => {
+    it('returns no errors for spouse distribution when married', () => {
       const formData = createEmptyFormData()
+      formData.testator.maritalStatus = 'married'
+      formData.testator.spouseName = 'Jane Smith'
+      formData.residuaryEstate.distributionType = 'spouse'
       const errors = validateStep(4, formData)
 
       expect(Object.keys(errors)).toHaveLength(0)
     })
 
+    it('returns error for spouse distribution when not married', () => {
+      const formData = createEmptyFormData()
+      formData.testator.maritalStatus = 'single'
+      formData.residuaryEstate.distributionType = 'spouse'
+      const errors = validateStep(4, formData)
+
+      expect(errors.distributionType).toBeDefined()
+      expect(errors.distributionType).toContain('married status')
+    })
+
     it('returns error when split shares do not total 100', () => {
       const formData = createEmptyFormData()
+      formData.testator.maritalStatus = 'married'
+      formData.testator.spouseName = 'Jane Smith'
+      formData.children = [{ name: 'Child 1' }]
       formData.residuaryEstate = {
         distributionType: 'split',
         spouseShare: 50,
-        childrenShare: 30
+        childrenShare: 30,
       }
       const errors = validateStep(4, formData)
 
@@ -272,10 +288,13 @@ describe('validateStep', () => {
 
     it('returns no error when split shares total 100', () => {
       const formData = createEmptyFormData()
+      formData.testator.maritalStatus = 'married'
+      formData.testator.spouseName = 'Jane Smith'
+      formData.children = [{ name: 'Child 1' }]
       formData.residuaryEstate = {
         distributionType: 'split',
         spouseShare: 60,
-        childrenShare: 40
+        childrenShare: 40,
       }
       const errors = validateStep(4, formData)
 
@@ -286,7 +305,7 @@ describe('validateStep', () => {
       const formData = createEmptyFormData()
       formData.residuaryEstate = {
         distributionType: 'custom',
-        customBeneficiaries: []
+        customBeneficiaries: [],
       }
       const errors = validateStep(4, formData)
 
@@ -299,8 +318,8 @@ describe('validateStep', () => {
         distributionType: 'custom',
         customBeneficiaries: [
           { name: 'Person A', share: 30 },
-          { name: 'Person B', share: 30 }
-        ]
+          { name: 'Person B', share: 30 },
+        ],
       }
       const errors = validateStep(4, formData)
 
@@ -313,8 +332,8 @@ describe('validateStep', () => {
         distributionType: 'custom',
         customBeneficiaries: [
           { name: 'Person A', share: 50 },
-          { name: 'Person B', share: 50 }
-        ]
+          { name: 'Person B', share: 50 },
+        ],
       }
       const errors = validateStep(4, formData)
 
@@ -334,7 +353,7 @@ describe('validateStep', () => {
       const formData = createEmptyFormData()
       formData.pets = {
         include: true,
-        items: [{ name: 'Fluffy', caretaker: '' }]
+        items: [{ name: 'Fluffy', caretaker: '' }],
       }
       const errors = validateStep(5, formData)
 
@@ -345,7 +364,7 @@ describe('validateStep', () => {
       const formData = createEmptyFormData()
       formData.pets = {
         include: true,
-        items: [{ name: 'Fluffy', caretaker: 'Uncle Bob' }]
+        items: [{ name: 'Fluffy', caretaker: 'Uncle Bob' }],
       }
       const errors = validateStep(5, formData)
 
@@ -365,7 +384,7 @@ describe('validateStep', () => {
       const formData = createEmptyFormData()
       formData.disinheritance = {
         include: true,
-        persons: [{ name: '', relationship: '' }]
+        persons: [{ name: '', relationship: '' }],
       }
       const errors = validateStep(6, formData)
 
@@ -377,7 +396,7 @@ describe('validateStep', () => {
       const formData = createEmptyFormData()
       formData.disinheritance = {
         include: true,
-        persons: [{ name: 'John Doe', relationship: 'Brother' }]
+        persons: [{ name: 'John Doe', relationship: 'Brother' }],
       }
       const errors = validateStep(6, formData)
 
@@ -434,7 +453,7 @@ describe('validateFullForm', () => {
       county: 'Miami-Dade',
       maritalStatus: 'single',
       spouseName: '',
-      residenceState: 'FL'
+      residenceState: 'FL',
     }
     formData.executor = {
       name: 'Jane Doe',
@@ -442,7 +461,12 @@ describe('validateFullForm', () => {
       address: '456 Oak St',
       city: 'Orlando',
       state: 'Florida',
-      zip: '32801'
+      zip: '32801',
+    }
+    // Use custom distribution for single testator (spouse distribution requires married)
+    formData.residuaryEstate = {
+      distributionType: 'custom',
+      customBeneficiaries: [{ name: 'Jane Doe', share: 100 }],
     }
     const errors = validateFullForm(formData)
 
@@ -467,7 +491,7 @@ describe('isStepComplete', () => {
       county: 'Miami-Dade',
       maritalStatus: 'single',
       spouseName: '',
-      residenceState: 'FL'
+      residenceState: 'FL',
     }
     expect(isStepComplete(0, formData)).toBe(true)
   })

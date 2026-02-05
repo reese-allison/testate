@@ -1,4 +1,7 @@
 import { useLocalStorage } from './useLocalStorage'
+import { DEFAULT_STATE, getStateConfig, STORAGE_KEYS } from '../constants'
+
+const defaultStateConfig = getStateConfig(DEFAULT_STATE)
 
 const initialState = {
   // Step 1: Testator Info
@@ -6,12 +9,12 @@ const initialState = {
     fullName: '',
     address: '',
     city: '',
-    state: 'Florida',
+    state: defaultStateConfig.name,
     zip: '',
     county: '',
     maritalStatus: 'single',
     spouseName: '',
-    residenceState: 'FL' // State code for will jurisdiction (default FL for backward compatibility)
+    residenceState: DEFAULT_STATE, // State code for will jurisdiction
   },
 
   // Step 2: Executor/Personal Representative
@@ -28,7 +31,7 @@ const initialState = {
     alternateCity: '',
     alternateState: '',
     alternateZip: '',
-    bondRequired: false
+    bondRequired: false,
   },
 
   // Step 3: Children & Guardian
@@ -45,7 +48,7 @@ const initialState = {
     alternateAddress: '',
     alternateCity: '',
     alternateState: '',
-    alternateZip: ''
+    alternateZip: '',
   },
 
   // Step 4: Specific Gifts
@@ -57,7 +60,7 @@ const initialState = {
     spouseShare: 100,
     childrenShare: 0,
     customBeneficiaries: [],
-    perStirpes: true
+    perStirpes: true,
   },
 
   // Step 6: Additional Provisions
@@ -69,11 +72,11 @@ const initialState = {
     cloudStorage: 'transfer',
     cryptocurrency: '',
     passwordManager: '',
-    instructions: ''
+    instructions: '',
   },
   pets: {
     include: false,
-    items: []
+    items: [],
   },
   funeral: {
     include: false,
@@ -83,36 +86,36 @@ const initialState = {
     memorialDonations: '',
     prePaidArrangements: false,
     prePaidDetails: '',
-    additionalWishes: ''
+    additionalWishes: '',
   },
   realProperty: {
     include: false,
-    items: []
+    items: [],
   },
   debtsAndTaxes: {
     include: false,
     paymentOrder: 'residuary', // residuary, proportional, specific
-    specificInstructions: ''
+    specificInstructions: '',
   },
   customProvisions: {
     include: false,
-    items: []  // { title: '', content: '' }
+    items: [], // { title: '', content: '' }
   },
 
   // Step 7: Disinheritance (Optional)
   disinheritance: {
     include: false,
-    persons: []
+    persons: [],
   },
 
   // Meta
   survivorshipPeriod: 30, // days
-  noContestClause: true
+  noContestClause: true,
 }
 
 export function useWillState() {
   const [formData, setFormData, clearFormData] = useLocalStorage(
-    'willGenerator_formData',
+    STORAGE_KEYS.FORM_DATA,
     initialState
   )
 
@@ -121,8 +124,8 @@ export function useWillState() {
       ...prev,
       [section]: {
         ...prev[section],
-        [field]: value
-      }
+        [field]: value,
+      },
     }))
   }
 
@@ -131,38 +134,15 @@ export function useWillState() {
       ...prev,
       [section]: {
         ...prev[section],
-        ...data
-      }
+        ...data,
+      },
     }))
   }
 
   const updateArray = (section, newArray) => {
     setFormData(prev => ({
       ...prev,
-      [section]: newArray
-    }))
-  }
-
-  const addToArray = (section, item) => {
-    setFormData(prev => ({
-      ...prev,
-      [section]: [...prev[section], item]
-    }))
-  }
-
-  const removeFromArray = (section, index) => {
-    setFormData(prev => ({
-      ...prev,
-      [section]: prev[section].filter((_, i) => i !== index)
-    }))
-  }
-
-  const updateArrayItem = (section, index, data) => {
-    setFormData(prev => ({
-      ...prev,
-      [section]: prev[section].map((item, i) =>
-        i === index ? { ...item, ...data } : item
-      )
+      [section]: newArray,
     }))
   }
 
@@ -176,11 +156,6 @@ export function useWillState() {
     updateField,
     updateSection,
     updateArray,
-    addToArray,
-    removeFromArray,
-    updateArrayItem,
-    resetForm
+    resetForm,
   }
 }
-
-export default useWillState

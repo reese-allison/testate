@@ -3,7 +3,7 @@ import { Card, FormField, Alert } from '../ui'
 import { US_STATES } from '../../constants'
 
 export function ExecutorInfo({ data, onChange, errors = {} }) {
-  const handleChange = (e) => {
+  const handleChange = e => {
     const { name, value, type, checked } = e.target
     onChange('executor', name, type === 'checkbox' ? checked : value)
   }
@@ -66,10 +66,7 @@ export function ExecutorInfo({ data, onChange, errors = {} }) {
               value={data.state}
               onChange={handleChange}
               required
-              options={[
-                { value: '', label: 'Select...' },
-                ...US_STATES
-              ]}
+              options={[{ value: '', label: 'Select...' }, ...US_STATES]}
               className="col-span-1"
             />
 
@@ -136,10 +133,7 @@ export function ExecutorInfo({ data, onChange, errors = {} }) {
                   type="select"
                   value={data.alternateState}
                   onChange={handleChange}
-                  options={[
-                    { value: '', label: 'Select...' },
-                    ...US_STATES
-                  ]}
+                  options={[{ value: '', label: 'Select...' }, ...US_STATES]}
                   className="col-span-1"
                 />
 
@@ -166,7 +160,7 @@ export function ExecutorInfo({ data, onChange, errors = {} }) {
           onChange={handleChange}
           tooltip="A bond is a type of insurance that protects your estate if the executor mismanages funds. Most people waive this requirement to save costs, especially when appointing a trusted family member."
         />
-        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
           {data.bondRequired
             ? 'A bond will be required. This provides additional protection but may slow down the probate process and incur costs.'
             : 'No bond will be required. This is the most common choice when appointing a trusted family member or friend.'}
@@ -185,5 +179,3 @@ export function ExecutorInfo({ data, onChange, errors = {} }) {
     </div>
   )
 }
-
-export default ExecutorInfo

@@ -1,6 +1,7 @@
 import React from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { Card, FormField, Alert } from '../ui'
+import { useArrayItemManager } from '../../hooks/useArrayItemManager'
 
 const GIFT_TYPES = [
   { value: 'cash', label: 'Cash/Money' },
@@ -10,35 +11,17 @@ const GIFT_TYPES = [
   { value: 'art', label: 'Art/Collectibles' },
   { value: 'furniture', label: 'Furniture/Household Items' },
   { value: 'investment', label: 'Investment Accounts' },
-  { value: 'other', label: 'Other Personal Property' }
+  { value: 'other', label: 'Other Personal Property' },
 ]
 
 export function SpecificGifts({ data, onChange, errors = {} }) {
-  const addGift = () => {
-    onChange('specificGifts', [
-      ...data,
-      {
-        type: 'cash',
-        description: '',
-        beneficiary: '',
-        beneficiaryRelationship: '',
-        alternativeBeneficiary: '',
-        conditions: ''
-      }
-    ])
-  }
+  const {
+    addItem: addGift,
+    updateItem: updateGift,
+    removeItem: removeGift,
+  } = useArrayItemManager('specificGifts', data, onChange, 'gift')
 
-  const updateGift = (index, field, value) => {
-    const updated = [...data]
-    updated[index] = { ...updated[index], [field]: value }
-    onChange('specificGifts', updated)
-  }
-
-  const removeGift = (index) => {
-    onChange('specificGifts', data.filter((_, i) => i !== index))
-  }
-
-  const getPlaceholder = (type) => {
+  const getPlaceholder = type => {
     switch (type) {
       case 'cash':
         return 'e.g., $10,000 (ten thousand dollars)'
@@ -65,27 +48,25 @@ export function SpecificGifts({ data, onChange, errors = {} }) {
       >
         <div className="space-y-4">
           {data.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-              No specific gifts added. Click the button below to add a gift, or proceed to
-              the next step to distribute your entire estate.
+            <p className="text-gray-600 dark:text-gray-300 text-center py-4">
+              No specific gifts added. Click the button below to add a gift, or proceed to the next
+              step to distribute your entire estate.
             </p>
           ) : (
             data.map((gift, index) => (
               <div
-                key={index}
+                key={gift.id || index}
                 className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4"
               >
                 <div className="flex items-center justify-between">
-                  <h4 className="font-medium text-gray-900 dark:text-white">
-                    Gift {index + 1}
-                  </h4>
+                  <h4 className="font-medium text-gray-900 dark:text-white">Gift {index + 1}</h4>
                   <button
                     type="button"
                     onClick={() => removeGift(index)}
                     className="text-red-500 hover:text-red-700 p-1"
-                    aria-label="Remove gift"
+                    aria-label={`Remove gift ${index + 1}${gift.beneficiary ? ` to ${gift.beneficiary}` : ''}`}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
 
@@ -94,7 +75,7 @@ export function SpecificGifts({ data, onChange, errors = {} }) {
                   name={`gift-${index}-type`}
                   type="select"
                   value={gift.type}
-                  onChange={(e) => updateGift(index, 'type', e.target.value)}
+                  onChange={e => updateGift(index, 'type', e.target.value)}
                   options={GIFT_TYPES}
                 />
 
@@ -103,11 +84,12 @@ export function SpecificGifts({ data, onChange, errors = {} }) {
                   name={`gift-${index}-description`}
                   type="textarea"
                   value={gift.description}
-                  onChange={(e) => updateGift(index, 'description', e.target.value)}
+                  onChange={e => updateGift(index, 'description', e.target.value)}
                   placeholder={getPlaceholder(gift.type)}
                   required
                   rows={2}
                   tooltip="Be as specific as possible to avoid confusion. Include identifying details like addresses, serial numbers, or account numbers."
+                  error={errors[`gift_${index}_description`]}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -115,17 +97,18 @@ export function SpecificGifts({ data, onChange, errors = {} }) {
                     label="Beneficiary Name"
                     name={`gift-${index}-beneficiary`}
                     value={gift.beneficiary}
-                    onChange={(e) => updateGift(index, 'beneficiary', e.target.value)}
+                    onChange={e => updateGift(index, 'beneficiary', e.target.value)}
                     placeholder="Full legal name of recipient"
                     required
                     tooltip="Enter the full legal name of the person or organization to receive this gift."
+                    error={errors[`gift_${index}_beneficiary`]}
                   />
 
                   <FormField
                     label="Relationship to You"
                     name={`gift-${index}-relationship`}
                     value={gift.beneficiaryRelationship}
-                    onChange={(e) => updateGift(index, 'beneficiaryRelationship', e.target.value)}
+                    onChange={e => updateGift(index, 'beneficiaryRelationship', e.target.value)}
                     placeholder="e.g., Nephew, Charity, Friend"
                   />
                 </div>
@@ -134,7 +117,7 @@ export function SpecificGifts({ data, onChange, errors = {} }) {
                   label="Alternative Beneficiary (Optional)"
                   name={`gift-${index}-alternative`}
                   value={gift.alternativeBeneficiary}
-                  onChange={(e) => updateGift(index, 'alternativeBeneficiary', e.target.value)}
+                  onChange={e => updateGift(index, 'alternativeBeneficiary', e.target.value)}
                   placeholder="Who should receive this if the primary beneficiary predeceases you?"
                   tooltip="If the primary beneficiary dies before you, this person will receive the gift instead."
                 />
@@ -144,7 +127,7 @@ export function SpecificGifts({ data, onChange, errors = {} }) {
                   name={`gift-${index}-conditions`}
                   type="textarea"
                   value={gift.conditions}
-                  onChange={(e) => updateGift(index, 'conditions', e.target.value)}
+                  onChange={e => updateGift(index, 'conditions', e.target.value)}
                   placeholder="e.g., To be received upon reaching age 25"
                   rows={2}
                   tooltip="Any conditions that must be met for the beneficiary to receive this gift."
@@ -156,16 +139,17 @@ export function SpecificGifts({ data, onChange, errors = {} }) {
           <button
             type="button"
             onClick={addGift}
+            aria-label="Add a new specific gift to your will"
             className="
               w-full py-3 px-4 rounded-lg border-2 border-dashed
               border-gray-300 dark:border-gray-600
-              text-gray-600 dark:text-gray-400
+              text-gray-600 dark:text-gray-300
               hover:border-blue-500 hover:text-blue-500
               dark:hover:border-blue-400 dark:hover:text-blue-400
               transition-colors flex items-center justify-center gap-2
             "
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-5 h-5" aria-hidden="true" />
             Add Specific Gift
           </button>
         </div>
@@ -183,12 +167,9 @@ export function SpecificGifts({ data, onChange, errors = {} }) {
 
       <Alert variant="warning" title="About Beneficiary Designations">
         Some assets pass outside your will through beneficiary designations (life insurance,
-        retirement accounts, TOD/POD accounts). Review these designations to ensure they
-        align with your wishes. This will only controls assets in your name without a
-        designated beneficiary.
+        retirement accounts, TOD/POD accounts). Review these designations to ensure they align with
+        your wishes. This will only controls assets in your name without a designated beneficiary.
       </Alert>
     </div>
   )
 }
-
-export default SpecificGifts

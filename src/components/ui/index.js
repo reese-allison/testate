@@ -1,5 +1,5 @@
 export { FormField } from './FormField'
 export { Card } from './Card'
 export { Alert } from './Alert'
-export { Tooltip } from './Tooltip'
+export { ConfirmDialog } from './ConfirmDialog'
 export { ProgressStepper } from './ProgressStepper'

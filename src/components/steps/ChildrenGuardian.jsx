@@ -2,29 +2,19 @@ import React from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { Card, FormField, Alert } from '../ui'
 import { US_STATES, CHILD_RELATIONSHIP_OPTIONS } from '../../constants'
+import { useArrayItemManager } from '../../hooks/useArrayItemManager'
 
 export function ChildrenGuardian({ data, guardian, onChange, onArrayChange, errors = {} }) {
-  const handleGuardianChange = (e) => {
+  const handleGuardianChange = e => {
     const { name, value } = e.target
     onChange('guardian', name, value)
   }
 
-  const addChild = () => {
-    onArrayChange('children', [
-      ...data,
-      { name: '', dateOfBirth: '', isMinor: true, relationship: 'biological' }
-    ])
-  }
-
-  const updateChild = (index, field, value) => {
-    const updated = [...data]
-    updated[index] = { ...updated[index], [field]: value }
-    onArrayChange('children', updated)
-  }
-
-  const removeChild = (index) => {
-    onArrayChange('children', data.filter((_, i) => i !== index))
-  }
+  const {
+    addItem: addChild,
+    updateItem: updateChild,
+    removeItem: removeChild,
+  } = useArrayItemManager('children', data, onArrayChange, 'child')
 
   const hasMinorChildren = data.some(child => child.isMinor)
 
@@ -36,26 +26,24 @@ export function ChildrenGuardian({ data, guardian, onChange, onArrayChange, erro
       >
         <div className="space-y-4">
           {data.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+            <p className="text-gray-600 dark:text-gray-300 text-center py-4">
               No children added. Click the button below to add a child.
             </p>
           ) : (
             data.map((child, index) => (
               <div
-                key={index}
+                key={child.id || index}
                 className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-3"
               >
                 <div className="flex items-center justify-between">
-                  <h4 className="font-medium text-gray-900 dark:text-white">
-                    Child {index + 1}
-                  </h4>
+                  <h4 className="font-medium text-gray-900 dark:text-white">Child {index + 1}</h4>
                   <button
                     type="button"
                     onClick={() => removeChild(index)}
                     className="text-red-500 hover:text-red-700 p-1"
-                    aria-label="Remove child"
+                    aria-label={`Remove child ${index + 1}${child.name ? `: ${child.name}` : ''}`}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
 
@@ -64,7 +52,7 @@ export function ChildrenGuardian({ data, guardian, onChange, onArrayChange, erro
                     label="Full Name"
                     name={`child-${index}-name`}
                     value={child.name}
-                    onChange={(e) => updateChild(index, 'name', e.target.value)}
+                    onChange={e => updateChild(index, 'name', e.target.value)}
                     placeholder="Child's full legal name"
                     required
                   />
@@ -74,7 +62,7 @@ export function ChildrenGuardian({ data, guardian, onChange, onArrayChange, erro
                     name={`child-${index}-dob`}
                     type="date"
                     value={child.dateOfBirth}
-                    onChange={(e) => updateChild(index, 'dateOfBirth', e.target.value)}
+                    onChange={e => updateChild(index, 'dateOfBirth', e.target.value)}
                   />
                 </div>
 
@@ -84,7 +72,7 @@ export function ChildrenGuardian({ data, guardian, onChange, onArrayChange, erro
                     name={`child-${index}-relationship`}
                     type="select"
                     value={child.relationship}
-                    onChange={(e) => updateChild(index, 'relationship', e.target.value)}
+                    onChange={e => updateChild(index, 'relationship', e.target.value)}
                     options={CHILD_RELATIONSHIP_OPTIONS}
                   />
 
@@ -94,7 +82,7 @@ export function ChildrenGuardian({ data, guardian, onChange, onArrayChange, erro
                       name={`child-${index}-minor`}
                       label="This child is currently a minor (under 18)"
                       value={child.isMinor}
-                      onChange={(e) => updateChild(index, 'isMinor', e.target.checked)}
+                      onChange={e => updateChild(index, 'isMinor', e.target.checked)}
                     />
                   </div>
                 </div>
@@ -105,16 +93,17 @@ export function ChildrenGuardian({ data, guardian, onChange, onArrayChange, erro
           <button
             type="button"
             onClick={addChild}
+            aria-label="Add a child to your will"
             className="
               w-full py-3 px-4 rounded-lg border-2 border-dashed
               border-gray-300 dark:border-gray-600
-              text-gray-600 dark:text-gray-400
+              text-gray-600 dark:text-gray-300
               hover:border-blue-500 hover:text-blue-500
               dark:hover:border-blue-400 dark:hover:text-blue-400
               transition-colors flex items-center justify-center gap-2
             "
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-5 h-5" aria-hidden="true" />
             Add Child
           </button>
         </div>
@@ -171,10 +160,7 @@ export function ChildrenGuardian({ data, guardian, onChange, onArrayChange, erro
                   type="select"
                   value={guardian.state}
                   onChange={handleGuardianChange}
-                  options={[
-                    { value: '', label: 'Select...' },
-                    ...US_STATES
-                  ]}
+                  options={[{ value: '', label: 'Select...' }, ...US_STATES]}
                   className="col-span-1"
                 />
 
@@ -238,10 +224,7 @@ export function ChildrenGuardian({ data, guardian, onChange, onArrayChange, erro
                       type="select"
                       value={guardian.alternateState}
                       onChange={handleGuardianChange}
-                      options={[
-                        { value: '', label: 'Select...' },
-                        ...US_STATES
-                      ]}
+                      options={[{ value: '', label: 'Select...' }, ...US_STATES]}
                       className="col-span-1"
                     />
 
@@ -260,22 +243,20 @@ export function ChildrenGuardian({ data, guardian, onChange, onArrayChange, erro
           </Card>
 
           <Alert variant="warning" title="Important Note About Guardianship">
-            Your guardian nomination is a strong recommendation to the court, but the court
-            will make the final decision based on the best interests of the child. The other
-            surviving parent typically has priority unless there are circumstances that would
-            make that inappropriate.
+            Your guardian nomination is a strong recommendation to the court, but the court will
+            make the final decision based on the best interests of the child. The other surviving
+            parent typically has priority unless there are circumstances that would make that
+            inappropriate.
           </Alert>
         </>
       )}
 
       {data.length === 0 && (
         <Alert variant="info">
-          If you have no children, you can proceed to the next step. Your estate will be
-          distributed according to your instructions without guardian provisions.
+          If you have no children, you can proceed to the next step. Your estate will be distributed
+          according to your instructions without guardian provisions.
         </Alert>
       )}
     </div>
   )
 }
-
-export default ChildrenGuardian

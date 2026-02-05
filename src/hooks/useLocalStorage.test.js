@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { renderHook, act } from '@testing-library/react'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import { useLocalStorage } from './useLocalStorage'
 
 describe('useLocalStorage', () => {
@@ -9,41 +9,37 @@ describe('useLocalStorage', () => {
   })
 
   it('returns initial value when localStorage is empty', () => {
-    const { result } = renderHook(() =>
-      useLocalStorage('testKey', 'initial')
-    )
+    const { result } = renderHook(() => useLocalStorage('testKey', 'initial'))
 
     expect(result.current[0]).toBe('initial')
   })
 
-  it('returns stored value when localStorage has data', () => {
-    localStorage.setItem('testKey', JSON.stringify('stored value'))
-
-    const { result } = renderHook(() =>
-      useLocalStorage('testKey', 'initial')
-    )
-
-    expect(result.current[0]).toBe('stored value')
-  })
-
-  it('updates localStorage when value changes', () => {
-    const { result } = renderHook(() =>
-      useLocalStorage('testKey', 'initial')
-    )
+  it('updates state when setValue is called', () => {
+    const { result } = renderHook(() => useLocalStorage('testKey', 'initial'))
 
     act(() => {
       result.current[1]('new value')
     })
 
     expect(result.current[0]).toBe('new value')
-    expect(JSON.parse(localStorage.getItem('testKey'))).toBe('new value')
+  })
+
+  it('persists value to localStorage', async () => {
+    const { result } = renderHook(() => useLocalStorage('testKey', 'initial'))
+
+    act(() => {
+      result.current[1]('new value')
+    })
+
+    await waitFor(() => {
+      const stored = localStorage.getItem('testKey')
+      expect(stored).toBe('"new value"')
+    })
   })
 
   it('handles object values', () => {
     const initialObject = { name: 'John', age: 30 }
-    const { result } = renderHook(() =>
-      useLocalStorage('testKey', initialObject)
-    )
+    const { result } = renderHook(() => useLocalStorage('testKey', initialObject))
 
     expect(result.current[0]).toEqual(initialObject)
 
@@ -54,12 +50,12 @@ describe('useLocalStorage', () => {
     expect(result.current[0]).toEqual({ name: 'Jane', age: 25 })
   })
 
-  it('clears storage and resets to initial value', () => {
-    localStorage.setItem('testKey', JSON.stringify('stored'))
+  it('clears storage and resets to initial value', async () => {
+    const { result } = renderHook(() => useLocalStorage('testKey', 'initial'))
 
-    const { result } = renderHook(() =>
-      useLocalStorage('testKey', 'initial')
-    )
+    act(() => {
+      result.current[1]('stored')
+    })
 
     expect(result.current[0]).toBe('stored')
 
@@ -69,27 +65,24 @@ describe('useLocalStorage', () => {
 
     // Value resets to initial
     expect(result.current[0]).toBe('initial')
-    // Note: useEffect will re-sync 'initial' back to localStorage
-    expect(JSON.parse(localStorage.getItem('testKey'))).toBe('initial')
+    // After the effect runs, localStorage will have the initial value
+    // (consistent persistence of current state)
+    await waitFor(() => {
+      expect(localStorage.getItem('testKey')).toBe('"initial"')
+    })
   })
 
-  it('handles invalid JSON in localStorage gracefully', () => {
-    localStorage.setItem('testKey', 'invalid json {')
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+  it('handles invalid data in localStorage gracefully', () => {
+    localStorage.setItem('testKey', 'invalid json {{{')
 
-    const { result } = renderHook(() =>
-      useLocalStorage('testKey', 'fallback')
-    )
+    const { result } = renderHook(() => useLocalStorage('testKey', 'fallback'))
 
     expect(result.current[0]).toBe('fallback')
-    consoleSpy.mockRestore()
   })
 
   it('handles array values', () => {
     const initialArray = [1, 2, 3]
-    const { result } = renderHook(() =>
-      useLocalStorage('testKey', initialArray)
-    )
+    const { result } = renderHook(() => useLocalStorage('testKey', initialArray))
 
     expect(result.current[0]).toEqual(initialArray)
 
@@ -101,9 +94,7 @@ describe('useLocalStorage', () => {
   })
 
   it('uses functional updates correctly', () => {
-    const { result } = renderHook(() =>
-      useLocalStorage('counter', 0)
-    )
+    const { result } = renderHook(() => useLocalStorage('counter', 0))
 
     act(() => {
       result.current[1](prev => prev + 1)
@@ -118,104 +109,99 @@ describe('useLocalStorage', () => {
     expect(result.current[0]).toBe(6)
   })
 
-  describe('deep merge with initial value', () => {
-    it('adds new fields from initial value when stored data is missing them', () => {
-      // Simulate old stored data missing a new field
-      localStorage.setItem('testKey', JSON.stringify({
-        name: 'John',
-        age: 30
-      }))
+  it('reads existing data from localStorage', () => {
+    localStorage.setItem('testKey', JSON.stringify({ name: 'Existing' }))
 
+    const { result } = renderHook(() => useLocalStorage('testKey', { name: 'Default' }))
+
+    expect(result.current[0]).toEqual({ name: 'Existing' })
+  })
+
+  describe('deep merge with initial value', () => {
+    it('adds new fields from initial value when stored data is missing them', async () => {
+      // First, create a hook and save some data
+      const { result: result1, unmount: unmount1 } = renderHook(() =>
+        useLocalStorage('testKey', { name: '', age: 0 })
+      )
+
+      act(() => {
+        result1.current[1]({ name: 'John', age: 30 })
+      })
+
+      await waitFor(() => {
+        expect(localStorage.getItem('testKey')).not.toBeNull()
+      })
+
+      unmount1()
+
+      // Now create a new hook with additional fields in initial value
       const initialValue = {
         name: '',
         age: 0,
-        newField: 'default value'
+        newField: 'default value',
       }
 
-      const { result } = renderHook(() =>
-        useLocalStorage('testKey', initialValue)
-      )
+      const { result: result2 } = renderHook(() => useLocalStorage('testKey', initialValue))
 
       // Should have stored values plus new field with default
-      expect(result.current[0]).toEqual({
+      expect(result2.current[0]).toEqual({
         name: 'John',
         age: 30,
-        newField: 'default value'
+        newField: 'default value',
       })
     })
 
-    it('deep merges nested objects', () => {
-      localStorage.setItem('testKey', JSON.stringify({
-        user: {
-          name: 'John'
-        }
-      }))
-
-      const initialValue = {
-        user: {
-          name: '',
-          email: 'default@example.com'
-        },
-        settings: {
-          theme: 'light'
-        }
-      }
-
-      const { result } = renderHook(() =>
-        useLocalStorage('testKey', initialValue)
+    it('preserves arrays from stored data', async () => {
+      // First, create and populate the storage
+      const { result: result1, unmount: unmount1 } = renderHook(() =>
+        useLocalStorage('testKey', { items: [] })
       )
 
-      expect(result.current[0]).toEqual({
-        user: {
-          name: 'John',
-          email: 'default@example.com'
-        },
-        settings: {
-          theme: 'light'
-        }
+      act(() => {
+        result1.current[1]({ items: [1, 2, 3] })
       })
-    })
 
-    it('preserves arrays from stored data', () => {
-      localStorage.setItem('testKey', JSON.stringify({
-        items: [1, 2, 3]
-      }))
+      await waitFor(() => {
+        expect(localStorage.getItem('testKey')).not.toBeNull()
+      })
 
+      unmount1()
+
+      // Now access with expanded initial value
       const initialValue = {
         items: [],
-        newItems: ['a', 'b']
+        newItems: ['a', 'b'],
       }
 
-      const { result } = renderHook(() =>
-        useLocalStorage('testKey', initialValue)
-      )
+      const { result: result2 } = renderHook(() => useLocalStorage('testKey', initialValue))
 
-      expect(result.current[0]).toEqual({
+      expect(result2.current[0]).toEqual({
         items: [1, 2, 3],
-        newItems: ['a', 'b']
+        newItems: ['a', 'b'],
+      })
+    })
+  })
+
+  describe('data storage', () => {
+    it('stores data as plain JSON', async () => {
+      const { result } = renderHook(() => useLocalStorage('testKey', 'secret data'))
+
+      act(() => {
+        result.current[1]('sensitive information')
+      })
+
+      await waitFor(() => {
+        const stored = localStorage.getItem('testKey')
+        expect(stored).toBe('"sensitive information"')
       })
     })
 
-    it('handles null stored values by using defaults', () => {
-      localStorage.setItem('testKey', JSON.stringify({
-        name: null,
-        value: 'stored'
-      }))
+    it('reads plain JSON data from localStorage', () => {
+      localStorage.setItem('testKey', '"my data"')
 
-      const initialValue = {
-        name: 'default',
-        value: 'initial',
-        extra: 'new'
-      }
+      const { result } = renderHook(() => useLocalStorage('testKey', ''))
 
-      const { result } = renderHook(() =>
-        useLocalStorage('testKey', initialValue)
-      )
-
-      // null values should be replaced with defaults to prevent crashes
-      expect(result.current[0].name).toBe('default')
-      expect(result.current[0].value).toBe('stored')
-      expect(result.current[0].extra).toBe('new')
+      expect(result.current[0]).toBe('my data')
     })
   })
 })

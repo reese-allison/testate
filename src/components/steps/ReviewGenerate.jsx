@@ -1,21 +1,49 @@
-import React, { useState } from 'react'
-import { FileText, Download, RotateCcw, CheckCircle, AlertCircle } from 'lucide-react'
+import React, { useState, useMemo, useCallback } from 'react'
+import { Download, RotateCcw, AlertCircle } from 'lucide-react'
 import { Card, Alert } from '../ui'
 import { generateWillText } from '../../utils/willTextGenerator'
-import { generatePDF } from '../../utils/pdfGenerator'
-import { getStateConfig } from '../../constants'
+import { validateFullForm } from '../../utils/validation'
+import { getStateConfig, DEFAULT_STATE } from '../../constants'
+
+function Section({ title, children, show = true }) {
+  if (!show) return null
+  return (
+    <div className="py-3 border-b border-gray-200 dark:border-gray-700 last:border-0">
+      <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{title}</h4>
+      <div className="text-gray-900 dark:text-white">{children}</div>
+    </div>
+  )
+}
 
 export function ReviewGenerate({ formData, onReset }) {
-  const stateConfig = getStateConfig(formData.testator?.residenceState || 'FL')
+  const stateConfig = getStateConfig(formData.testator?.residenceState || DEFAULT_STATE)
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState(null)
   const [showThankYou, setShowThankYou] = useState(false)
 
-  const handleGeneratePDF = async () => {
+  // Memoize validation errors
+  const validationErrors = useMemo(() => validateFullForm(formData), [formData])
+  const hasErrors = Object.keys(validationErrors).length > 0
+
+  // Memoize will text generation
+  const willText = useMemo(() => generateWillText(formData), [formData])
+
+  // Lazy load PDF generation for bundle optimization
+  const handleGeneratePDF = useCallback(async () => {
+    // Prevent PDF generation if there are validation errors
+    if (hasErrors) {
+      setError(
+        'Please fix all validation errors before generating your will. Go back to previous steps and complete all required fields.'
+      )
+      return
+    }
+
     setIsGenerating(true)
     setError(null)
     setShowThankYou(false)
     try {
+      // Lazy load the PDF generator module
+      const { generatePDF } = await import('../../utils/pdfGenerator')
       await generatePDF(formData)
       setShowThankYou(true)
     } catch (err) {
@@ -24,29 +52,38 @@ export function ReviewGenerate({ formData, onReset }) {
     } finally {
       setIsGenerating(false)
     }
-  }
+  }, [formData, hasErrors])
 
-  const willText = generateWillText(formData)
-
-  const Section = ({ title, children, show = true }) => {
-    if (!show) return null
-    return (
-      <div className="py-3 border-b border-gray-200 dark:border-gray-700 last:border-0">
-        <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{title}</h4>
-        <div className="text-gray-900 dark:text-white">{children}</div>
-      </div>
-    )
-  }
-
-  const { testator, executor, children, guardian, specificGifts, residuaryEstate,
-    digitalAssets, pets, funeral, disinheritance } = formData
+  const {
+    testator,
+    executor,
+    children,
+    guardian,
+    specificGifts,
+    residuaryEstate,
+    digitalAssets,
+    pets,
+    funeral,
+    disinheritance,
+  } = formData
 
   return (
     <div className="space-y-6">
+      {hasErrors && (
+        <Alert variant="error" title="Validation Errors Found">
+          <p>Please go back and fix the following issues before generating your will:</p>
+          <ul className="list-disc list-inside mt-2">
+            {Object.values(validationErrors).map((error, i) => (
+              <li key={i}>{error}</li>
+            ))}
+          </ul>
+        </Alert>
+      )}
+
       <Alert variant="warning" title="Review Carefully Before Generating">
-        Please review all information below. Once generated, you'll need to print, sign, and
-        have the will properly witnessed according to {stateConfig.name} law ({stateConfig.witnesses} witnesses and a notary
-        for the self-proving affidavit).
+        Please review all information below. Once generated, you'll need to print, sign, and have
+        the will properly witnessed according to {stateConfig.name} law ({stateConfig.witnesses}{' '}
+        witnesses and a notary for the self-proving affidavit).
       </Alert>
 
       {/* Summary Cards */}
@@ -59,12 +96,16 @@ export function ReviewGenerate({ formData, onReset }) {
         <Section title="Marital Status">
           {testator.maritalStatus === 'married'
             ? `Married to ${testator.spouseName}`
-            : testator.maritalStatus.charAt(0).toUpperCase() + testator.maritalStatus.slice(1)}
+            : testator.maritalStatus
+              ? testator.maritalStatus.charAt(0).toUpperCase() + testator.maritalStatus.slice(1)
+              : 'Not specified'}
         </Section>
       </Card>
 
       <Card title="Personal Representative (Executor)">
-        <Section title="Primary">{executor.name} ({executor.relationship})</Section>
+        <Section title="Primary">
+          {executor.name} ({executor.relationship})
+        </Section>
         <Section title="Alternate" show={!!executor.alternateName}>
           {executor.alternateName} ({executor.alternateRelationship})
         </Section>
@@ -75,8 +116,9 @@ export function ReviewGenerate({ formData, onReset }) {
         <Section title="Children">
           <ul className="list-disc list-inside">
             {children.map((child, i) => (
-              <li key={i}>
-                {child.name} ({child.relationship}{child.isMinor ? ', minor' : ''})
+              <li key={child.id || i}>
+                {child.name} ({child.relationship}
+                {child.isMinor ? ', minor' : ''})
               </li>
             ))}
           </ul>
@@ -84,19 +126,25 @@ export function ReviewGenerate({ formData, onReset }) {
         <Section title="Guardian" show={!!guardian.name && children.some(c => c.isMinor)}>
           {guardian.name} ({guardian.relationship})
           {guardian.alternateName && (
-            <span className="text-sm text-gray-500 ml-2">
-              Alt: {guardian.alternateName}
-            </span>
+            <span className="text-sm text-gray-600 ml-2">Alt: {guardian.alternateName}</span>
           )}
         </Section>
       </Card>
 
       <Card title="Specific Gifts" show={specificGifts.length > 0}>
         {specificGifts.map((gift, i) => (
-          <Section key={i} title={`Gift ${i + 1}`}>
-            <p><strong>To:</strong> {gift.beneficiary}</p>
-            <p><strong>Item:</strong> {gift.description}</p>
-            {gift.conditions && <p><strong>Conditions:</strong> {gift.conditions}</p>}
+          <Section key={gift.id || i} title={`Gift ${i + 1}`}>
+            <p>
+              <strong>To:</strong> {gift.beneficiary}
+            </p>
+            <p>
+              <strong>Item:</strong> {gift.description}
+            </p>
+            {gift.conditions && (
+              <p>
+                <strong>Conditions:</strong> {gift.conditions}
+              </p>
+            )}
           </Section>
         ))}
       </Card>
@@ -113,7 +161,9 @@ export function ReviewGenerate({ formData, onReset }) {
           <Section title="Custom Beneficiaries">
             <ul className="list-disc list-inside">
               {residuaryEstate.customBeneficiaries.map((b, i) => (
-                <li key={i}>{b.name}: {b.share}%</li>
+                <li key={b.id || i}>
+                  {b.name}: {b.share}%
+                </li>
               ))}
             </ul>
           </Section>
@@ -121,7 +171,10 @@ export function ReviewGenerate({ formData, onReset }) {
         <Section title="Per Stirpes">{residuaryEstate.perStirpes ? 'Yes' : 'No'}</Section>
       </Card>
 
-      <Card title="Additional Provisions" show={digitalAssets.include || pets.include || funeral.include}>
+      <Card
+        title="Additional Provisions"
+        show={digitalAssets.include || pets.include || funeral.include}
+      >
         <Section title="Digital Assets" show={digitalAssets.include}>
           Fiduciary: {digitalAssets.fiduciary || 'Not specified'}
         </Section>
@@ -133,10 +186,15 @@ export function ReviewGenerate({ formData, onReset }) {
         </Section>
       </Card>
 
-      <Card title="Disinheritance" show={disinheritance.include && disinheritance.persons?.length > 0}>
+      <Card
+        title="Disinheritance"
+        show={disinheritance.include && disinheritance.persons?.length > 0}
+      >
         <ul className="list-disc list-inside">
           {disinheritance.persons?.map((p, i) => (
-            <li key={i}>{p.name} ({p.relationship})</li>
+            <li key={p.id || i}>
+              {p.name} ({p.relationship})
+            </li>
           ))}
         </ul>
       </Card>
@@ -153,31 +211,50 @@ export function ReviewGenerate({ formData, onReset }) {
       {/* Actions */}
       <div className="flex flex-col sm:flex-row gap-4">
         <button
+          type="button"
           onClick={handleGeneratePDF}
-          disabled={isGenerating}
-          className="
+          disabled={isGenerating || hasErrors}
+          aria-label={
+            hasErrors ? 'Fix validation errors before downloading' : 'Download will as PDF'
+          }
+          className={`
             flex-1 py-3 px-6 rounded-lg
-            bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400
             text-white font-medium
             flex items-center justify-center gap-2
             transition-colors
-          "
+            ${
+              hasErrors
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400'
+            }
+          `}
         >
           {isGenerating ? (
             <>
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div
+                className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"
+                role="status"
+                aria-label="Generating PDF"
+              />
               Generating...
+            </>
+          ) : hasErrors ? (
+            <>
+              <AlertCircle className="w-5 h-5" aria-hidden="true" />
+              Fix Errors First
             </>
           ) : (
             <>
-              <Download className="w-5 h-5" />
+              <Download className="w-5 h-5" aria-hidden="true" />
               Download PDF
             </>
           )}
         </button>
 
         <button
+          type="button"
           onClick={onReset}
+          aria-label="Start over and clear all form data"
           className="
             py-3 px-6 rounded-lg
             border border-gray-300 dark:border-gray-600
@@ -188,7 +265,7 @@ export function ReviewGenerate({ formData, onReset }) {
             transition-colors
           "
         >
-          <RotateCcw className="w-5 h-5" />
+          <RotateCcw className="w-5 h-5" aria-hidden="true" />
           Start Over
         </button>
       </div>
@@ -211,8 +288,8 @@ export function ReviewGenerate({ formData, onReset }) {
               className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
             >
               supporting the project
-            </a>
-            {' '}to help keep it free and maintained.
+            </a>{' '}
+            to help keep it free and maintained.
           </p>
         </Alert>
       )}
@@ -221,8 +298,8 @@ export function ReviewGenerate({ formData, onReset }) {
       <Alert variant="info" title="Important Legal Information">
         <div className="space-y-2 mt-2">
           <p>
-            <strong>This is a template tool, not legal advice.</strong> The generated document
-            is provided for informational purposes only.
+            <strong>This is a template tool, not legal advice.</strong> The generated document is
+            provided for informational purposes only.
           </p>
           <p>To make this will legally valid in {stateConfig.name}, you must:</p>
           <ul className="list-disc list-inside space-y-1">
@@ -240,5 +317,3 @@ export function ReviewGenerate({ formData, onReset }) {
     </div>
   )
 }
-
-export default ReviewGenerate

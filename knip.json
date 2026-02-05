@@ -1,0 +1,11 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["src/index.jsx", "src/**/*.test.{js,jsx}"],
+  "project": ["src/**/*.{js,jsx}"],
+  "ignore": ["**/*.config.js"],
+  "rules": {
+    "duplicates": "off",
+    "exports": "warn",
+    "files": "warn"
+  }
+}

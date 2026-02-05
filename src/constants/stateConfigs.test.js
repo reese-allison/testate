@@ -3,7 +3,7 @@ import {
   STATE_CONFIGS,
   getStateConfig,
   COMMUNITY_PROPERTY_STATES,
-  THREE_WITNESS_STATES
+  THREE_WITNESS_STATES,
 } from './stateConfigs'
 
 describe('STATE_CONFIGS', () => {
@@ -23,7 +23,7 @@ describe('STATE_CONFIGS', () => {
       'communityProperty',
       'homesteadProvisions',
       'digitalAssetsAct',
-      'simultaneousDeathAct'
+      'simultaneousDeathAct',
     ]
 
     Object.entries(STATE_CONFIGS).forEach(([stateCode, config]) => {
@@ -65,8 +65,9 @@ describe('STATE_CONFIGS', () => {
   })
 
   it('most states require 2 witnesses', () => {
-    const twoWitnessStates = Object.entries(STATE_CONFIGS)
-      .filter(([_, config]) => config.witnesses === 2)
+    const twoWitnessStates = Object.entries(STATE_CONFIGS).filter(
+      ([_, config]) => config.witnesses === 2
+    )
     expect(twoWitnessStates.length).toBeGreaterThan(45)
   })
 })

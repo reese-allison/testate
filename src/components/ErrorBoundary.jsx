@@ -1,5 +1,6 @@
 import React from 'react'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { STORAGE_KEYS } from '../constants'
 
 /**
  * Error Boundary component to catch and handle React rendering errors
@@ -24,12 +25,24 @@ export class ErrorBoundary extends React.Component {
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: null, errorInfo: null })
     // Optionally clear localStorage if form data might be corrupted
     if (this.props.clearOnReset) {
-      localStorage.removeItem('willGenerator_formData')
+      localStorage.removeItem(STORAGE_KEYS.FORM_DATA)
     }
-    window.location.reload()
+
+    // If reloadOnReset is explicitly requested, reload the page
+    if (this.props.reloadOnReset) {
+      window.location.reload()
+      return
+    }
+
+    // Reset error state to attempt graceful recovery
+    this.setState({ hasError: false, error: null, errorInfo: null })
+
+    // Call optional onReset callback if provided
+    if (this.props.onReset) {
+      this.props.onReset()
+    }
   }
 
   render() {
@@ -38,19 +51,19 @@ export class ErrorBoundary extends React.Component {
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
           <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 text-center">
             <div className="flex justify-center mb-4">
-              <AlertTriangle className="w-16 h-16 text-red-500" />
+              <AlertTriangle className="w-16 h-16 text-red-500" aria-hidden="true" />
             </div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
               Something went wrong
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               {this.props.fallbackMessage ||
                 'An unexpected error occurred. Your data has been saved and you can try again.'}
             </p>
 
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <details className="mb-4 text-left">
-                <summary className="cursor-pointer text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                <summary className="cursor-pointer text-sm text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-300">
                   Error details (development only)
                 </summary>
                 <pre className="mt-2 p-2 bg-gray-100 dark:bg-gray-700 rounded text-xs overflow-auto max-h-40">
@@ -65,7 +78,7 @@ export class ErrorBoundary extends React.Component {
                 onClick={this.handleReset}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
-                <RefreshCw className="w-4 h-4" />
+                <RefreshCw className="w-4 h-4" aria-hidden="true" />
                 Try Again
               </button>
               {this.props.showHomeButton && (

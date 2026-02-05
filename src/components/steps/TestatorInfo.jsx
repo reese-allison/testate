@@ -1,9 +1,14 @@
 import React from 'react'
 import { Card, FormField, Alert } from '../ui'
-import { FLORIDA_COUNTIES, MARITAL_STATUS_OPTIONS, US_STATES, STATE_CONFIGS, getStateConfig } from '../../constants'
+import {
+  FLORIDA_COUNTIES,
+  MARITAL_STATUS_OPTIONS,
+  US_STATES,
+  getStateConfig,
+} from '../../constants'
 
 export function TestatorInfo({ data, onChange, errors = {} }) {
-  const handleChange = (e) => {
+  const handleChange = e => {
     const { name, value } = e.target
     onChange('testator', name, value)
 
@@ -38,7 +43,7 @@ export function TestatorInfo({ data, onChange, errors = {} }) {
           error={errors.residenceState}
           options={[
             { value: '', label: 'Select your state...' },
-            ...US_STATES.map(s => ({ value: s.value, label: s.label }))
+            ...US_STATES.map(s => ({ value: s.value, label: s.label })),
           ]}
           tooltip="Select the state where you currently legally reside. This determines which state's laws will govern your will."
         />
@@ -46,15 +51,15 @@ export function TestatorInfo({ data, onChange, errors = {} }) {
         {selectedStateConfig.communityProperty && (
           <Alert variant="info" title="Community Property State" className="mt-4">
             {selectedStateConfig.name} is a community property state. Property acquired during
-            marriage is generally considered jointly owned by both spouses. This may affect
-            how you can distribute certain assets in your will.
+            marriage is generally considered jointly owned by both spouses. This may affect how you
+            can distribute certain assets in your will.
           </Alert>
         )}
 
         {selectedStateConfig.witnesses === 3 && (
           <Alert variant="info" title="Witness Requirement" className="mt-4">
-            {selectedStateConfig.name} requires {selectedStateConfig.witnesses} witnesses for a valid will,
-            which is more than most states.
+            {selectedStateConfig.name} requires {selectedStateConfig.witnesses} witnesses for a
+            valid will, which is more than most states.
           </Alert>
         )}
       </Card>
@@ -132,7 +137,7 @@ export function TestatorInfo({ data, onChange, errors = {} }) {
               error={errors.county}
               options={[
                 { value: '', label: 'Select your county...' },
-                ...FLORIDA_COUNTIES.map(c => ({ value: c, label: c }))
+                ...FLORIDA_COUNTIES.map(c => ({ value: c, label: c })),
               ]}
               tooltip="Select the Florida county where you currently reside."
             />
@@ -183,13 +188,13 @@ export function TestatorInfo({ data, onChange, errors = {} }) {
       </Card>
 
       <Alert variant="info" title={`${selectedStateConfig.name} Residency`}>
-        This will is governed by {selectedStateConfig.name} law. The will must be executed
-        according to {selectedStateConfig.name} requirements, including being signed by you
-        and witnessed by {selectedStateConfig.witnesses} {selectedStateConfig.witnesses === 1 ? 'witness' : 'witnesses'}.
-        {!isFloridaResident && ' For state-specific legal advice, consult a licensed attorney in your state.'}
+        This will is governed by {selectedStateConfig.name} law. The will must be executed according
+        to {selectedStateConfig.name} requirements, including being signed by you and witnessed by{' '}
+        {selectedStateConfig.witnesses}{' '}
+        {selectedStateConfig.witnesses === 1 ? 'witness' : 'witnesses'}.
+        {!isFloridaResident &&
+          ' For state-specific legal advice, consult a licensed attorney in your state.'}
       </Alert>
     </div>
   )
 }
-
-export default TestatorInfo

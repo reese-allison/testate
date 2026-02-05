@@ -72,7 +72,7 @@ describe('ErrorBoundary', () => {
     expect(screen.queryByText('Go Home')).not.toBeInTheDocument()
   })
 
-  it('clears localStorage on reset when clearOnReset is true', () => {
+  it('clears localStorage and reloads when clearOnReset and reloadOnReset are true', () => {
     const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem')
     const reloadSpy = vi.fn()
 
@@ -82,7 +82,7 @@ describe('ErrorBoundary', () => {
     window.location = { reload: reloadSpy }
 
     render(
-      <ErrorBoundary clearOnReset={true}>
+      <ErrorBoundary clearOnReset={true} reloadOnReset={true}>
         <ThrowError shouldThrow={true} />
       </ErrorBoundary>
     )
@@ -97,26 +97,26 @@ describe('ErrorBoundary', () => {
     removeItemSpy.mockRestore()
   })
 
-  it('does not clear localStorage when clearOnReset is false', () => {
+  it('gracefully recovers without reload when reloadOnReset is false (default)', () => {
     const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem')
-    const reloadSpy = vi.fn()
-
-    const originalLocation = window.location
-    delete window.location
-    window.location = { reload: reloadSpy }
+    const onResetSpy = vi.fn()
 
     render(
-      <ErrorBoundary clearOnReset={false}>
+      <ErrorBoundary onReset={onResetSpy}>
         <ThrowError shouldThrow={true} />
       </ErrorBoundary>
     )
 
+    // Verify error state is shown
+    expect(screen.getByText('Something went wrong')).toBeInTheDocument()
+
     fireEvent.click(screen.getByText('Try Again'))
 
+    // Should not clear localStorage by default
     expect(removeItemSpy).not.toHaveBeenCalled()
-    expect(reloadSpy).toHaveBeenCalled()
+    // Should call onReset callback
+    expect(onResetSpy).toHaveBeenCalled()
 
-    window.location = originalLocation
     removeItemSpy.mockRestore()
   })
 

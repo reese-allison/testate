@@ -15,7 +15,7 @@ vi.mock('../hooks/useWillState', () => ({
         zip: '',
         county: '',
         maritalStatus: 'single',
-        spouseName: ''
+        spouseName: '',
       },
       executor: {
         name: '',
@@ -30,7 +30,7 @@ vi.mock('../hooks/useWillState', () => ({
         alternateCity: '',
         alternateState: '',
         alternateZip: '',
-        bondRequired: false
+        bondRequired: false,
       },
       children: [],
       guardian: {
@@ -45,7 +45,7 @@ vi.mock('../hooks/useWillState', () => ({
         alternateAddress: '',
         alternateCity: '',
         alternateState: '',
-        alternateZip: ''
+        alternateZip: '',
       },
       specificGifts: [],
       residuaryEstate: {
@@ -53,7 +53,7 @@ vi.mock('../hooks/useWillState', () => ({
         spouseShare: 100,
         childrenShare: 0,
         customBeneficiaries: [],
-        perStirpes: true
+        perStirpes: true,
       },
       digitalAssets: { include: false },
       pets: { include: false, items: [] },
@@ -63,27 +63,23 @@ vi.mock('../hooks/useWillState', () => ({
       customProvisions: { include: false, items: [] },
       disinheritance: { include: false, persons: [] },
       survivorshipPeriod: 30,
-      noContestClause: true
+      noContestClause: true,
     },
     updateField: vi.fn(),
     updateSection: vi.fn(),
     updateArray: vi.fn(),
-    resetForm: vi.fn()
-  })
+    resetForm: vi.fn(),
+  }),
 }))
 
 describe('WillGenerator Step Navigation', () => {
-  let confirmSpy
-
   beforeEach(() => {
-    // Mock window.confirm
-    confirmSpy = vi.spyOn(window, 'confirm')
     // Mock window.scrollTo
     window.scrollTo = vi.fn()
   })
 
   afterEach(() => {
-    confirmSpy.mockRestore()
+    vi.restoreAllMocks()
   })
 
   it('renders the progress stepper with all steps', () => {
@@ -105,9 +101,7 @@ describe('WillGenerator Step Navigation', () => {
     expect(screen.getByText('Step 1 of 8')).toBeInTheDocument()
   })
 
-  it('allows clicking on a future step and shows validation errors', () => {
-    confirmSpy.mockReturnValue(false) // User clicks Cancel
-
+  it('allows clicking on a future step and shows validation errors with confirm dialog', () => {
     render(<WillGenerator />)
 
     // Try to click on step 2 (Executor)
@@ -116,16 +110,22 @@ describe('WillGenerator Step Navigation', () => {
 
     // Should show validation errors since step 1 is incomplete
     expect(screen.getByText('Please fix the following errors:')).toBeInTheDocument()
+
+    // Should show confirm dialog
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument()
+    expect(screen.getByText('Continue with Errors?')).toBeInTheDocument()
   })
 
   it('navigates forward when user confirms despite validation errors', async () => {
-    confirmSpy.mockReturnValue(true) // User clicks OK
-
     render(<WillGenerator />)
 
     // Try to click on step 2 (Executor)
     const step2Button = screen.getByText('Executor').closest('button')
     fireEvent.click(step2Button)
+
+    // Click the confirm button in dialog
+    const confirmButton = screen.getByText('Continue Anyway')
+    fireEvent.click(confirmButton)
 
     // Should navigate to step 2
     await waitFor(() => {
@@ -134,16 +134,20 @@ describe('WillGenerator Step Navigation', () => {
   })
 
   it('does not navigate forward when user cancels', async () => {
-    confirmSpy.mockReturnValue(false) // User clicks Cancel
-
     render(<WillGenerator />)
 
     // Try to click on step 2 (Executor)
     const step2Button = screen.getByText('Executor').closest('button')
     fireEvent.click(step2Button)
 
+    // Click the cancel button in dialog
+    const cancelButton = screen.getByText('Stay Here')
+    fireEvent.click(cancelButton)
+
     // Should stay on step 1
     expect(screen.getByText('Step 1 of 8')).toBeInTheDocument()
+    // Dialog should be closed
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
   })
 
   it('clicking current step does nothing', async () => {
@@ -155,55 +159,90 @@ describe('WillGenerator Step Navigation', () => {
 
     // Should stay on step 1
     expect(screen.getByText('Step 1 of 8')).toBeInTheDocument()
-    // No confirmation dialog should appear
-    expect(confirmSpy).not.toHaveBeenCalled()
+    // No dialog should appear
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+  })
+
+  it('closes dialog when escape key is pressed', async () => {
+    render(<WillGenerator />)
+
+    // Try to click on step 2 (Executor)
+    const step2Button = screen.getByText('Executor').closest('button')
+    fireEvent.click(step2Button)
+
+    // Dialog should be open
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument()
+
+    // Press Escape key
+    fireEvent.keyDown(document, { key: 'Escape' })
+
+    // Dialog should be closed
+    await waitFor(() => {
+      expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    })
+  })
+
+  it('closes dialog when backdrop is clicked', async () => {
+    render(<WillGenerator />)
+
+    // Try to click on step 2 (Executor)
+    const step2Button = screen.getByText('Executor').closest('button')
+    fireEvent.click(step2Button)
+
+    // Dialog should be open
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument()
+
+    // Click the backdrop (the div with role="presentation" contains it)
+    const presentationDiv = screen.getByRole('presentation')
+    const backdrop = presentationDiv.querySelector('.bg-black\\/50')
+    fireEvent.click(backdrop)
+
+    // Dialog should be closed
+    await waitFor(() => {
+      expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    })
   })
 })
 
 describe('WillGenerator Backward Navigation', () => {
-  let confirmSpy
-
   beforeEach(() => {
-    confirmSpy = vi.spyOn(window, 'confirm')
     window.scrollTo = vi.fn()
   })
 
   afterEach(() => {
-    confirmSpy.mockRestore()
+    vi.restoreAllMocks()
   })
 
   it('allows navigating backward without validation', async () => {
-    confirmSpy.mockReturnValue(true) // For forward navigation
-
     render(<WillGenerator />)
 
     // Navigate forward to step 2
     const step2Button = screen.getByText('Executor').closest('button')
     fireEvent.click(step2Button)
 
+    // Confirm in dialog
+    const confirmButton = screen.getByText('Continue Anyway')
+    fireEvent.click(confirmButton)
+
     await waitFor(() => {
       expect(screen.getByText('Step 2 of 8')).toBeInTheDocument()
     })
-
-    // Reset confirm spy
-    confirmSpy.mockClear()
 
     // Navigate back to step 1
     const step1Button = screen.getByText('You').closest('button')
     fireEvent.click(step1Button)
 
-    // Should navigate without confirmation
+    // Should navigate without any dialog
     await waitFor(() => {
       expect(screen.getByText('Step 1 of 8')).toBeInTheDocument()
     })
-    expect(confirmSpy).not.toHaveBeenCalled()
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
   })
 })
 
 describe('WillGenerator Previous/Next Buttons', () => {
   beforeEach(() => {
     window.scrollTo = vi.fn()
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
   })
 
   afterEach(() => {
@@ -231,5 +270,40 @@ describe('WillGenerator Previous/Next Buttons', () => {
 
     // Should show validation errors since step 1 is incomplete
     expect(screen.getByText('Please fix the following errors:')).toBeInTheDocument()
+  })
+})
+
+describe('ConfirmDialog Accessibility', () => {
+  beforeEach(() => {
+    window.scrollTo = vi.fn()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('has proper ARIA attributes', async () => {
+    render(<WillGenerator />)
+
+    // Open dialog
+    const step2Button = screen.getByText('Executor').closest('button')
+    fireEvent.click(step2Button)
+
+    const dialog = screen.getByRole('alertdialog')
+    expect(dialog).toHaveAttribute('aria-modal', 'true')
+    expect(dialog).toHaveAttribute('aria-labelledby', 'confirm-dialog-title')
+    expect(dialog).toHaveAttribute('aria-describedby', 'confirm-dialog-message')
+  })
+
+  it('focuses cancel button when dialog opens', async () => {
+    render(<WillGenerator />)
+
+    // Open dialog
+    const step2Button = screen.getByText('Executor').closest('button')
+    fireEvent.click(step2Button)
+
+    await waitFor(() => {
+      expect(screen.getByText('Stay Here')).toHaveFocus()
+    })
   })
 })
